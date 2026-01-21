@@ -19,21 +19,21 @@
             </style>
         @endif
     </head>
-    <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
+    <body class="bg-white text-gray-900 flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
         <header class="w-full lg:max-w-4xl max-w-[335px] text-sm mb-6 not-has-[nav]:hidden">
             @if (Route::has('login'))
                 <nav class="flex items-center justify-end gap-4">
                     @auth
                         <a
                             href="{{ url('/dashboard') }}"
-                            class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal"
+                            class="inline-block px-5 py-1.5 border-gray-300 hover:border-gray-400 border text-gray-900 rounded-sm text-sm leading-normal"
                         >
                             Dashboard
                         </a>
                     @else
                         <a
                             href="{{ route('login') }}"
-                            class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal"
+                            class="inline-block px-5 py-1.5 text-gray-900 border border-transparent hover:border-gray-300 rounded-sm text-sm leading-normal"
                         >
                             Log in
                         </a>
@@ -41,7 +41,7 @@
                         @if (Route::has('register'))
                             <a
                                 href="{{ route('register') }}"
-                                class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
+                                class="inline-block px-5 py-1.5 border-gray-300 hover:border-gray-400 border text-gray-900 rounded-sm text-sm leading-normal">
                                 Register
                             </a>
                         @endif
@@ -60,9 +60,9 @@
                                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
-                            <h1 class="text-3xl font-bold text-green-800 dark:text-green-200">Satkhira Voter List</h1>
+                            <h1 class="text-3xl font-bold text-green-800">Satkhira Voter List</h1>
                         </div>
-                        <p class="text-gray-600 dark:text-gray-400">Find voter information quickly and easily</p>
+                        <p class="text-gray-600">Find voter information quickly and easily</p>
                     </div>
 
                     <!-- Search Section -->
@@ -71,10 +71,10 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <!-- Upazilla Filter -->
                             <div>
-                                <label for="upazilla-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upazilla:</label>
+                                <label for="upazilla-select" class="block text-sm font-medium text-gray-700 mb-2">Upazilla:</label>
                                 <select
                                     id="upazilla-select"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                                 >
                                     <option value="">Select Upazilla</option>
                                     <option value="satkhira-sadar">Satkhira Sadar</option>
@@ -88,10 +88,10 @@
 
                             <!-- Pouroshova/Union Filter -->
                             <div>
-                                <label for="pouroshova-union-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pouroshova/Union:</label>
+                                <label for="pouroshova-union-select" class="block text-sm font-medium text-gray-700 mb-2">Pouroshova/Union:</label>
                                 <select
                                     id="pouroshova-union-select"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 disabled:opacity-50"
                                     disabled
                                 >
                                     <option value="">Select Pouroshova/Union</option>
@@ -100,10 +100,10 @@
 
                             <!-- Ward Filter -->
                             <div>
-                                <label for="ward-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ward:</label>
+                                <label for="ward-select" class="block text-sm font-medium text-gray-700 mb-2">Ward:</label>
                                 <select
                                     id="ward-select"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 disabled:opacity-50"
                                     disabled
                                 >
                                     <option value="">Select Ward</option>
@@ -117,7 +117,7 @@
                                 type="text"
                                 id="search-input"
                                 placeholder="Enter voter name or ID..."
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 placeholder-gray-500"
                             >
                             <button
                                 id="search-button"
