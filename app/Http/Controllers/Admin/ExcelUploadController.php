@@ -7,7 +7,32 @@ use App\Models\Voter;
 use App\Helpers\BengaliTransliterator;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use Illuminate\Support\Facades\DB;
+
+/**
+ * Chunk Read Filter - reads only specific rows to save memory
+ */
+class ChunkReadFilter implements IReadFilter
+{
+    private int $startRow;
+    private int $endRow;
+
+    public function __construct(int $startRow, int $endRow)
+    {
+        $this->startRow = $startRow;
+        $this->endRow = $endRow;
+    }
+
+    public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
+    {
+        // Always read row 1 (header) and rows within our chunk
+        if ($row === 1 || ($row >= $this->startRow && $row <= $this->endRow)) {
+            return true;
+        }
+        return false;
+    }
+}
 
 class ExcelUploadController extends Controller
 {
@@ -23,6 +48,7 @@ class ExcelUploadController extends Controller
 
     /**
      * Smart Upload - Only update changed data, don't replace all
+     * Uses chunk reading for memory efficiency
      */
     public function upload(Request $request)
     {
@@ -32,9 +58,8 @@ class ExcelUploadController extends Controller
         ]);
 
         // Increase execution time and memory for large files
-        set_time_limit(0); // No time limit
-        ini_set('memory_limit', '1024M');
-        ini_set('max_execution_time', '0');
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
         
         // Disable output buffering
         if (ob_get_level()) {
@@ -44,22 +69,25 @@ class ExcelUploadController extends Controller
         $mode = $request->input('upload_mode', 'smart');
 
         try {
-            DB::beginTransaction();
-
+            // Save uploaded file temporarily
             $file = $request->file('excel_file');
+            $tempPath = $file->getRealPath();
+            
+            // Use chunk reader filter to read in smaller pieces
             $reader = IOFactory::createReader('Xlsx');
             $reader->setReadDataOnly(true);
             $reader->setReadEmptyCells(false);
+            
+            // First, get total rows count only
+            $spreadsheetInfo = $reader->listWorksheetInfo($tempPath);
+            $totalRows = $spreadsheetInfo[0]['totalRows'] ?? 0;
+            
+            if ($totalRows <= 1) {
+                return redirect()->route('admin.upload')
+                    ->with('error', 'এক্সেল ফাইলে কোন ডেটা নেই!');
+            }
 
-            // Load spreadsheet
-            $spreadsheet = $reader->load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $totalRows = $sheet->getHighestRow();
-
-            $newCount = 0;
-            $updateCount = 0;
-            $skipCount = 0;
-            $batchSize = 200; // Smaller batches for stability
+            DB::beginTransaction();
 
             // If replace mode, truncate first
             if ($mode === 'replace') {
@@ -72,96 +100,96 @@ class ExcelUploadController extends Controller
                 $existingVoters = Voter::pluck('id', 'voter_id')->toArray();
             }
 
-            $insertBatch = [];
-            $updateBatch = [];
-
-            for ($row = 2; $row <= $totalRows; $row++) {
-                $rowData = [];
-                for ($col = 1; $col <= 17; $col++) {
-                    $rowData[] = $sheet->getCellByColumnAndRow($col, $row)->getValue();
-                }
-
-                // Skip empty rows
-                if (empty($rowData[0]) && empty($rowData[10])) {
-                    $skipCount++;
-                    continue;
-                }
-
-                $voterId = $rowData[11] ?? null;
+            $newCount = 0;
+            $updateCount = 0;
+            $skipCount = 0;
+            $chunkSize = 500;
+            
+            // Process in chunks
+            for ($startRow = 2; $startRow <= $totalRows; $startRow += $chunkSize) {
+                $endRow = min($startRow + $chunkSize - 1, $totalRows);
                 
-                // Get Bengali values
-                $nameBn = $rowData[10] ?? null;
-                $fatherNameBn = $rowData[12] ?? null;
-                $motherNameBn = $rowData[13] ?? null;
-                $occupationBn = $rowData[14] ?? null;
-                $addressBn = $rowData[16] ?? null;
+                // Create chunk filter
+                $chunkFilter = new ChunkReadFilter($startRow, $endRow);
+                $reader->setReadFilter($chunkFilter);
                 
-                $voterData = [
-                    'serial_no' => $rowData[0] ?? null,
-                    'upazila' => $rowData[1] ?? null,
-                    'union' => $rowData[2] ?? null,
-                    'ward' => $rowData[3] ?? null,
-                    'area_code' => $rowData[4] ?? null,
-                    'area_name' => $rowData[5] ?? null,
-                    'gender' => $rowData[6] ?? null,
-                    'center_no' => $rowData[7] ?? null,
-                    'center_name' => $rowData[8] ?? null,
-                    'name' => $nameBn,
-                    'name_en' => BengaliTransliterator::transliterate($nameBn),
-                    'voter_id' => $voterId,
-                    'father_name' => $fatherNameBn,
-                    'father_name_en' => BengaliTransliterator::transliterate($fatherNameBn),
-                    'mother_name' => $motherNameBn,
-                    'mother_name_en' => BengaliTransliterator::transliterate($motherNameBn),
-                    'occupation' => $occupationBn,
-                    'profession_en' => BengaliTransliterator::transliterate($occupationBn),
-                    'date_of_birth' => $rowData[15] ?? null,
-                    'address' => $addressBn,
-                    'address_en' => BengaliTransliterator::transliterate($addressBn),
-                    'updated_at' => now(),
-                ];
-
-                if ($mode === 'smart' && $voterId && isset($existingVoters[$voterId])) {
-                    // Update existing voter
-                    $updateBatch[] = array_merge($voterData, ['id' => $existingVoters[$voterId]]);
-                    $updateCount++;
-                    
-                    // Batch update
-                    if (count($updateBatch) >= $batchSize) {
-                        $this->batchUpdate($updateBatch);
-                        $updateBatch = [];
+                // Load only this chunk
+                $spreadsheet = $reader->load($tempPath);
+                $sheet = $spreadsheet->getActiveSheet();
+                
+                $insertBatch = [];
+                $updateBatch = [];
+                
+                for ($row = $startRow; $row <= $endRow; $row++) {
+                    $rowData = [];
+                    for ($col = 1; $col <= 17; $col++) {
+                        $cell = $sheet->getCellByColumnAndRow($col, $row);
+                        $rowData[] = $cell ? $cell->getValue() : null;
                     }
-                } else {
-                    // Insert new voter
-                    $voterData['created_at'] = now();
-                    $insertBatch[] = $voterData;
-                    $newCount++;
+
+                    // Skip empty rows
+                    if (empty($rowData[0]) && empty($rowData[10])) {
+                        $skipCount++;
+                        continue;
+                    }
+
+                    $voterId = $rowData[11] ?? null;
                     
-                    // Batch insert
-                    if (count($insertBatch) >= $batchSize) {
-                        Voter::insert($insertBatch);
-                        $insertBatch = [];
+                    // Get Bengali values
+                    $nameBn = $rowData[10] ?? null;
+                    $fatherNameBn = $rowData[12] ?? null;
+                    $motherNameBn = $rowData[13] ?? null;
+                    $occupationBn = $rowData[14] ?? null;
+                    $addressBn = $rowData[16] ?? null;
+                    
+                    $voterData = [
+                        'serial_no' => $rowData[0] ?? null,
+                        'upazila' => $rowData[1] ?? null,
+                        'union' => $rowData[2] ?? null,
+                        'ward' => $rowData[3] ?? null,
+                        'area_code' => $rowData[4] ?? null,
+                        'area_name' => $rowData[5] ?? null,
+                        'gender' => $rowData[6] ?? null,
+                        'center_no' => $rowData[7] ?? null,
+                        'center_name' => $rowData[8] ?? null,
+                        'name' => $nameBn,
+                        'name_en' => BengaliTransliterator::transliterate($nameBn),
+                        'voter_id' => $voterId,
+                        'father_name' => $fatherNameBn,
+                        'father_name_en' => BengaliTransliterator::transliterate($fatherNameBn),
+                        'mother_name' => $motherNameBn,
+                        'mother_name_en' => BengaliTransliterator::transliterate($motherNameBn),
+                        'occupation' => $occupationBn,
+                        'profession_en' => BengaliTransliterator::transliterate($occupationBn),
+                        'date_of_birth' => $rowData[15] ?? null,
+                        'address' => $addressBn,
+                        'address_en' => BengaliTransliterator::transliterate($addressBn),
+                        'updated_at' => now(),
+                    ];
+
+                    if ($mode === 'smart' && $voterId && isset($existingVoters[$voterId])) {
+                        $updateBatch[] = array_merge($voterData, ['id' => $existingVoters[$voterId]]);
+                        $updateCount++;
+                    } else {
+                        $voterData['created_at'] = now();
+                        $insertBatch[] = $voterData;
+                        $newCount++;
                     }
                 }
-
-                // Memory cleanup every 1000 rows
-                if ($row % 1000 === 0) {
-                    gc_collect_cycles();
+                
+                // Insert/Update this chunk
+                if (!empty($insertBatch)) {
+                    Voter::insert($insertBatch);
                 }
+                if (!empty($updateBatch)) {
+                    $this->batchUpdate($updateBatch);
+                }
+                
+                // Free memory
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet, $sheet, $insertBatch, $updateBatch);
+                gc_collect_cycles();
             }
-
-            // Insert/Update remaining batches
-            if (!empty($insertBatch)) {
-                Voter::insert($insertBatch);
-            }
-            if (!empty($updateBatch)) {
-                $this->batchUpdate($updateBatch);
-            }
-
-            // Cleanup
-            $spreadsheet->disconnectWorksheets();
-            unset($spreadsheet);
-            gc_collect_cycles();
 
             DB::commit();
 
