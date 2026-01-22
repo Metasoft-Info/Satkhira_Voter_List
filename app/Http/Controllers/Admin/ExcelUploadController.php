@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Voter;
+use App\Helpers\BengaliTransliterator;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\DB;
@@ -82,6 +83,13 @@ class ExcelUploadController extends Controller
 
                 $voterId = $rowData[11] ?? null;
                 
+                // Get Bengali values
+                $nameBn = $rowData[10] ?? null;
+                $fatherNameBn = $rowData[12] ?? null;
+                $motherNameBn = $rowData[13] ?? null;
+                $occupationBn = $rowData[14] ?? null;
+                $addressBn = $rowData[16] ?? null;
+                
                 $voterData = [
                     'serial_no' => $rowData[0] ?? null,
                     'upazila' => $rowData[1] ?? null,
@@ -92,13 +100,18 @@ class ExcelUploadController extends Controller
                     'gender' => $rowData[6] ?? null,
                     'center_no' => $rowData[7] ?? null,
                     'center_name' => $rowData[8] ?? null,
-                    'name' => $rowData[10] ?? null,
+                    'name' => $nameBn,
+                    'name_en' => BengaliTransliterator::transliterate($nameBn),
                     'voter_id' => $voterId,
-                    'father_name' => $rowData[12] ?? null,
-                    'mother_name' => $rowData[13] ?? null,
-                    'occupation' => $rowData[14] ?? null,
+                    'father_name' => $fatherNameBn,
+                    'father_name_en' => BengaliTransliterator::transliterate($fatherNameBn),
+                    'mother_name' => $motherNameBn,
+                    'mother_name_en' => BengaliTransliterator::transliterate($motherNameBn),
+                    'occupation' => $occupationBn,
+                    'profession_en' => BengaliTransliterator::transliterate($occupationBn),
                     'date_of_birth' => $rowData[15] ?? null,
-                    'address' => $rowData[16] ?? null,
+                    'address' => $addressBn,
+                    'address_en' => BengaliTransliterator::transliterate($addressBn),
                     'updated_at' => now(),
                 ];
 
@@ -188,6 +201,62 @@ class ExcelUploadController extends Controller
             DB::rollBack();
             return redirect()->route('admin.upload')
                 ->with('error', 'ডেটা মুছতে ব্যর্থ: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Transliterate Bengali names to English for all voters
+     */
+    public function transliterate()
+    {
+        set_time_limit(600); // 10 minutes
+        ini_set('memory_limit', '2048M');
+
+        try {
+            $total = Voter::count();
+            $processed = 0;
+            $batchSize = 500;
+
+            Voter::query()
+                ->select(['id', 'name', 'father_name', 'mother_name', 'occupation', 'address'])
+                ->chunkById($batchSize, function ($voters) use (&$processed) {
+                    foreach ($voters as $voter) {
+                        $updateData = [];
+                        
+                        if ($voter->name) {
+                            $updateData['name_en'] = BengaliTransliterator::transliterate($voter->name);
+                        }
+                        
+                        if ($voter->father_name) {
+                            $updateData['father_name_en'] = BengaliTransliterator::transliterate($voter->father_name);
+                        }
+                        
+                        if ($voter->mother_name) {
+                            $updateData['mother_name_en'] = BengaliTransliterator::transliterate($voter->mother_name);
+                        }
+                        
+                        if ($voter->occupation) {
+                            $updateData['profession_en'] = BengaliTransliterator::transliterate($voter->occupation);
+                        }
+                        
+                        if ($voter->address) {
+                            $updateData['address_en'] = BengaliTransliterator::transliterate($voter->address);
+                        }
+                        
+                        if (!empty($updateData)) {
+                            Voter::where('id', $voter->id)->update($updateData);
+                        }
+                        
+                        $processed++;
+                    }
+                });
+
+            return redirect()->route('admin.upload')
+                ->with('success', "সফলভাবে {$processed} জন ভোটারের নাম ইংরেজিতে রূপান্তর করা হয়েছে!");
+
+        } catch (\Exception $e) {
+            return redirect()->route('admin.upload')
+                ->with('error', 'রূপান্তর ব্যর্থ: ' . $e->getMessage());
         }
     }
 }

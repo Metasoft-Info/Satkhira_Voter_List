@@ -125,13 +125,25 @@ class HomeController extends Controller
                     });
                     break;
                 case 'name':
-                    $voterQuery->where('name', 'LIKE', "%{$query}%");
+                    // Search in both Bengali and English name columns
+                    $voterQuery->where(function($q) use ($query) {
+                        $q->where('name', 'LIKE', "%{$query}%")
+                          ->orWhere('name_en', 'LIKE', "%{$query}%");
+                    });
                     break;
                 case 'father_name':
-                    $voterQuery->where('father_name', 'LIKE', "%{$query}%");
+                    // Search in both Bengali and English father_name columns
+                    $voterQuery->where(function($q) use ($query) {
+                        $q->where('father_name', 'LIKE', "%{$query}%")
+                          ->orWhere('father_name_en', 'LIKE', "%{$query}%");
+                    });
                     break;
                 case 'mother_name':
-                    $voterQuery->where('mother_name', 'LIKE', "%{$query}%");
+                    // Search in both Bengali and English mother_name columns
+                    $voterQuery->where(function($q) use ($query) {
+                        $q->where('mother_name', 'LIKE', "%{$query}%")
+                          ->orWhere('mother_name_en', 'LIKE', "%{$query}%");
+                    });
                     break;
                 case 'serial_no':
                     // Search with both Bengali and English numbers

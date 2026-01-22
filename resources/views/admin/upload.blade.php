@@ -131,6 +131,23 @@
             </form>
         </div>
     </div>
+
+    <!-- English Transliteration -->
+    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+        <h2 class="text-lg font-semibold text-blue-600 mb-4">🔤 ইংরেজি অনুবাদ</h2>
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-700 font-medium">বাংলা নাম ইংরেজিতে রূপান্তর</p>
+                <p class="text-sm text-gray-500">এটি সকল ভোটারের বাংলা নাম ইংরেজিতে (transliteration) রূপান্তর করবে। এতে ইংরেজিতে সার্চ করা যাবে।</p>
+            </div>
+            <form action="{{ route('admin.transliterate') }}" method="POST" onsubmit="return confirm('এটি কিছু সময় নিতে পারে। আপনি কি চালিয়ে যেতে চান?');">
+                @csrf
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    রূপান্তর করুন
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
