@@ -27,13 +27,19 @@ class ExcelUploadController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls|max:50000',
+            'excel_file' => 'required|file|mimes:xlsx,xls|max:100000',
             'upload_mode' => 'required|in:smart,replace',
         ]);
 
         // Increase execution time and memory for large files
-        set_time_limit(600); // 10 minutes
-        ini_set('memory_limit', '2048M');
+        set_time_limit(0); // No time limit
+        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', '0');
+        
+        // Disable output buffering
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
 
         $mode = $request->input('upload_mode', 'smart');
 
@@ -53,7 +59,7 @@ class ExcelUploadController extends Controller
             $newCount = 0;
             $updateCount = 0;
             $skipCount = 0;
-            $batchSize = 500;
+            $batchSize = 200; // Smaller batches for stability
 
             // If replace mode, truncate first
             if ($mode === 'replace') {
