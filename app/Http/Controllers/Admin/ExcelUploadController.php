@@ -460,7 +460,9 @@ class ExcelUploadController extends Controller
                 continue;
             }
 
-            $serialNo = trim($row[0] ?? '');
+            // Column mapping based on CSV header:
+            // ক্রমিক(0),উপজলো(1),ইউনিয়ন(2),ওয়ার্ড(3),এলাকা কোড(4),এলাকা(5),পুরুষ/মহলিা(6),কেন্দ্র নং(7),কেন্দ্রের নাম(8),সিরিয়াল নং(9),নাম(10),ভোটার নং(11),পিতা(12),মাতা(13),পেশা(14),জন্ম তারিখ(15),ঠিকানা(16)
+            $serialNo = trim($row[9] ?? '');  // সিরিয়াল নং is at index 9
             $upazila = trim($row[1] ?? '');
             $union = trim($row[2] ?? '');
             $ward = trim($row[3] ?? '');

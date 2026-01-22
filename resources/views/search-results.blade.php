@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>অনুসন্ধান ফলাফল - সাতক্ষীরা-২ ভোটার তালিকা</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <!-- Cache Control - Force fresh content -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -120,7 +126,7 @@
                         @if($query)
                             "{{ $query }}" এর জন্য 
                         @endif
-                        <span class="font-semibold text-purple-600">{{ $voters->total() ?? 0 }}</span> টি ফলাফল পাওয়া গেছে
+                        <span class="font-semibold text-purple-600">@bengali($voters->total() ?? 0)</span> টি ফলাফল পাওয়া গেছে
                     </p>
                 </div>
                 
@@ -133,91 +139,60 @@
 
         <!-- Results -->
         @if($voters->count() > 0)
-            <div class="grid gap-4">
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
                 @foreach($voters as $index => $voter)
-                    <div id="voter-card-{{ $voter->id }}" class="bg-white rounded-lg shadow hover:shadow-md transition-all duration-200 border border-gray-200 p-4">
-                        <!-- Simple Card Content -->
-                        <div class="space-y-2 text-sm">
-                            <!-- Row 1: Center & Serial -->
-                            <div class="flex flex-wrap gap-x-6 gap-y-1 pb-2 border-b border-gray-100">
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-16">কেন্দ্র:</span>
-                                    <span class="font-semibold text-purple-700">{{ $voter->center_no }} - {{ $voter->center_name }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-16">সিরিয়াল:</span>
-                                    <span class="font-bold text-gray-800">{{ $voter->serial_no }}</span>
-                                </div>
+                    <div id="voter-card-{{ $voter->id }}" class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden">
+                        <!-- Card Header -->
+                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 flex justify-between items-center">
+                            <div class="flex items-center gap-3 text-white">
+                                <span class="bg-white/20 px-2 py-0.5 rounded text-xs font-medium">সিরিয়াল: @bengali($voter->serial_no)</span>
+                                <span class="text-sm">@bengali($voter->center_no) - {{ $voter->center_name }}</span>
+                            </div>
+                            <span class="text-white/80 text-xs">{{ $voter->gender == 'পুরুষ' ? '👨' : ($voter->gender == 'মহিলা' ? '👩' : '🧑') }}</span>
+                        </div>
+                        
+                        <!-- Card Body -->
+                        <div class="p-4">
+                            <!-- Name & Voter ID - Main Info -->
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3 pb-3 border-b border-gray-100">
+                                <h3 class="text-lg font-bold text-gray-900">{{ $voter->name }}</h3>
+                                <span class="font-mono text-sm font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded">@bengali($voter->voter_id)</span>
                             </div>
                             
-                            <!-- Row 2: Name & Voter ID -->
-                            <div class="flex flex-wrap gap-x-6 gap-y-1">
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-16">নাম:</span>
-                                    <span class="font-bold text-gray-900 text-base">{{ $voter->name }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-16">ভোটার নং:</span>
-                                    <span class="font-mono font-semibold text-purple-600">{{ $voter->voter_id }}</span>
-                                </div>
+                            <!-- Info Grid -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 text-sm">
+                                <div><span class="text-gray-400">লিঙ্গ:</span> <span class="text-gray-700 font-medium">{{ $voter->gender }}</span></div>
+                                <div><span class="text-gray-400">জন্ম:</span> <span class="text-gray-700">@bengali($voter->date_of_birth ?? 'N/A')</span></div>
+                                <div><span class="text-gray-400">পেশা:</span> <span class="text-gray-700">{{ $voter->occupation ?? 'N/A' }}</span></div>
+                                <div><span class="text-gray-400">ওয়ার্ড:</span> <span class="text-gray-700">@bengali($voter->ward)</span></div>
                             </div>
                             
-                            <!-- Row 3: Gender & DOB -->
-                            <div class="flex flex-wrap gap-x-6 gap-y-1">
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-16">লিঙ্গ:</span>
-                                    <span class="font-medium {{ $voter->gender == 'পুরুষ' ? 'text-blue-600' : ($voter->gender == 'মহিলা' ? 'text-pink-600' : 'text-purple-600') }}">{{ $voter->gender }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-20">জন্ম তারিখ:</span>
-                                    <span class="font-medium text-gray-700">{{ $voter->date_of_birth ?? 'N/A' }}</span>
-                                </div>
+                            <!-- Parents -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm mt-2 pt-2 border-t border-gray-50">
+                                <div><span class="text-gray-400">পিতা:</span> <span class="text-gray-700">{{ $voter->father_name ?? 'N/A' }}</span></div>
+                                <div><span class="text-gray-400">মাতা:</span> <span class="text-gray-700">{{ $voter->mother_name ?? 'N/A' }}</span></div>
                             </div>
                             
-                            <!-- Row 4: Occupation -->
-                            <div class="flex items-center">
-                                <span class="text-gray-500 w-16">পেশা:</span>
-                                <span class="font-medium text-gray-700">{{ $voter->occupation ?? 'N/A' }}</span>
-                            </div>
-                            
-                            <!-- Row 5: Father & Mother -->
-                            <div class="flex flex-wrap gap-x-6 gap-y-1">
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-20">পিতার নাম:</span>
-                                    <span class="font-medium text-gray-700">{{ $voter->father_name ?? 'N/A' }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-20">মাতার নাম:</span>
-                                    <span class="font-medium text-gray-700">{{ $voter->mother_name ?? 'N/A' }}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Row 6: Address -->
-                            <div class="flex items-start pt-2 border-t border-gray-100">
-                                <span class="text-gray-500 w-16 flex-shrink-0">ঠিকানা:</span>
-                                <span class="font-medium text-gray-700">
-                                    {{ $voter->upazila }}, {{ $voter->union }}, ওয়ার্ড: {{ $voter->ward }}, {{ $voter->area_name ?? $voter->area_code }}
-                                    @if($voter->address), {{ $voter->address }}@endif
-                                </span>
+                            <!-- Address -->
+                            <div class="text-sm mt-2 pt-2 border-t border-gray-50">
+                                <span class="text-gray-400">ঠিকানা:</span> 
+                                <span class="text-gray-600">{{ $voter->upazila }}, {{ $voter->union }}, {{ $voter->area_name ?? $voter->area_code }}@if($voter->address), {{ $voter->address }}@endif</span>
                             </div>
                         </div>
                         
-                        <!-- Share & Copy Buttons -->
-                        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                        <!-- Share Buttons -->
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 border-t border-gray-100">
                             <button onclick="shareVoter({{ $voter->id }}, '{{ addslashes($voter->name) }}')" 
                                     class="flex items-center gap-1 text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-full transition">
-                                <i class="fab fa-whatsapp"></i>
-                                <span>WhatsApp</span>
+                                <i class="fab fa-whatsapp"></i> WhatsApp
                             </button>
                             <button onclick="shareVoterNative({{ $voter->id }})" 
                                     class="flex items-center gap-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-full transition">
-                                <i class="fas fa-share-alt"></i>
-                                <span>শেয়ার</span>
+                                <i class="fas fa-share-alt"></i> শেয়ার
                             </button>
                             <button onclick="copyVoterData({{ $voter->id }})" 
-                                    class="flex items-center gap-1 text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full transition">
-                                <i class="fas fa-copy"></i>
-                                <span>কপি</span>
+                                    class="flex items-center gap-1 text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-full transition">
+                                <i class="fas fa-copy"></i> কপি
                             </button>
                         </div>
                         

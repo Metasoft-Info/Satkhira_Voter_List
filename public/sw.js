@@ -1,7 +1,9 @@
 // Service Worker for সাতক্ষীরা-২ ভোটার তালিকা PWA
-const CACHE_NAME = 'satkhira-voter-v3';
-const STATIC_CACHE = 'satkhira-static-v3';
-const DATA_CACHE = 'satkhira-data-v3';
+// Version 5 - Force cache clear on update
+const CACHE_VERSION = 'v5';
+const CACHE_NAME = 'satkhira-voter-' + CACHE_VERSION;
+const STATIC_CACHE = 'satkhira-static-' + CACHE_VERSION;
+const DATA_CACHE = 'satkhira-data-' + CACHE_VERSION;
 
 // Files to cache immediately (offline.html is self-contained now)
 const STATIC_FILES = [
@@ -10,35 +12,38 @@ const STATIC_FILES = [
     '/offline.html'
 ];
 
-// Install Service Worker
+// Install Service Worker - Skip waiting to activate immediately
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker v3...');
+    console.log('[SW] Installing Service Worker ' + CACHE_VERSION + '...');
     event.waitUntil(
         caches.open(STATIC_CACHE).then((cache) => {
             console.log('[SW] Caching static files');
             return cache.addAll(STATIC_FILES);
         })
     );
+    // Force immediate activation
     self.skipWaiting();
 });
 
-// Activate Service Worker
+// Activate Service Worker - Clear ALL old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker v3...');
+    console.log('[SW] Activating Service Worker ' + CACHE_VERSION + '...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    // Delete all old caches (v1, v2, etc.)
-                    if (cacheName !== STATIC_CACHE && cacheName !== DATA_CACHE && cacheName !== CACHE_NAME) {
+                    // Delete ALL caches that don't match current version
+                    if (!cacheName.includes(CACHE_VERSION)) {
                         console.log('[SW] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
+        }).then(() => {
+            // Force all clients to use this service worker
+            return self.clients.claim();
         })
     );
-    self.clients.claim();
 });
 
 // Fetch Handler - Network first, fallback to cache
