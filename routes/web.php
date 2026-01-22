@@ -52,6 +52,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/upload', [ExcelUploadController::class, 'upload'])->name('upload.submit');
         Route::post('/reset-voters', [ExcelUploadController::class, 'resetVoters'])->name('reset.voters');
         Route::post('/transliterate', [ExcelUploadController::class, 'transliterate'])->name('transliterate');
+        Route::get('/import-server-csv', [ExcelUploadController::class, 'importServerCsv'])->name('import.server.csv');
         
         // Banner Management
         Route::get('/banners', [SettingsController::class, 'banners'])->name('banners');

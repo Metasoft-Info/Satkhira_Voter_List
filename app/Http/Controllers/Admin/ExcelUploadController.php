@@ -418,4 +418,129 @@ class ExcelUploadController extends Controller
                 ->with('error', 'রূপান্তর ব্যর্থ: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Import CSV file from server (Voter_Data.csv)
+     * URL: /admin/import-server-csv
+     */
+    public function importServerCsv()
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+
+        $csvFile = base_path('Voter_Data.csv');
+
+        if (!file_exists($csvFile)) {
+            return response()->json(['error' => 'CSV file not found: Voter_Data.csv'], 404);
+        }
+
+        $handle = fopen($csvFile, 'r');
+        if (!$handle) {
+            return response()->json(['error' => 'Cannot open CSV file'], 500);
+        }
+
+        // Skip header
+        fgetcsv($handle);
+
+        // Get existing voters
+        $existingVoters = Voter::pluck('id', 'voter_id')->toArray();
+        $existingCount = count($existingVoters);
+
+        DB::beginTransaction();
+
+        $newCount = 0;
+        $updateCount = 0;
+        $skipCount = 0;
+        $insertBatch = [];
+        $batchSize = 500;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 12) {
+                $skipCount++;
+                continue;
+            }
+
+            $serialNo = trim($row[0] ?? '');
+            $upazila = trim($row[1] ?? '');
+            $union = trim($row[2] ?? '');
+            $ward = trim($row[3] ?? '');
+            $areaCode = trim($row[4] ?? '');
+            $areaName = trim($row[5] ?? '');
+            $gender = trim($row[6] ?? '');
+            $centerNo = trim($row[7] ?? '');
+            $centerName = trim($row[8] ?? '');
+            $name = trim($row[10] ?? '');
+            $voterId = trim($row[11] ?? '');
+            $fatherName = trim($row[12] ?? '');
+            $motherName = trim($row[13] ?? '');
+            $occupation = trim($row[14] ?? '');
+            $dob = trim($row[15] ?? '');
+            $address = trim($row[16] ?? '');
+
+            if (empty($serialNo) && empty($name)) {
+                $skipCount++;
+                continue;
+            }
+
+            $voterData = [
+                'serial_no' => $serialNo,
+                'upazila' => $upazila,
+                'union' => $union,
+                'ward' => $ward,
+                'area_code' => $areaCode,
+                'area_name' => $areaName,
+                'gender' => $gender,
+                'center_no' => $centerNo,
+                'center_name' => $centerName,
+                'name' => $name,
+                'name_en' => BengaliTransliterator::transliterate($name),
+                'voter_id' => $voterId,
+                'father_name' => $fatherName,
+                'father_name_en' => BengaliTransliterator::transliterate($fatherName),
+                'mother_name' => $motherName,
+                'mother_name_en' => BengaliTransliterator::transliterate($motherName),
+                'occupation' => $occupation,
+                'profession_en' => BengaliTransliterator::transliterate($occupation),
+                'date_of_birth' => $dob,
+                'address' => $address,
+                'address_en' => BengaliTransliterator::transliterate($address),
+                'updated_at' => now(),
+            ];
+
+            if ($voterId && isset($existingVoters[$voterId])) {
+                Voter::where('id', $existingVoters[$voterId])->update($voterData);
+                $updateCount++;
+            } else {
+                $voterData['created_at'] = now();
+                $insertBatch[] = $voterData;
+                $newCount++;
+
+                if (count($insertBatch) >= $batchSize) {
+                    Voter::insert($insertBatch);
+                    $insertBatch = [];
+                    gc_collect_cycles();
+                }
+            }
+        }
+
+        // Insert remaining
+        if (!empty($insertBatch)) {
+            Voter::insert($insertBatch);
+        }
+
+        DB::commit();
+        fclose($handle);
+
+        $total = Voter::count();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Import completed successfully!',
+            'existing_before' => $existingCount,
+            'new_records' => $newCount,
+            'updated_records' => $updateCount,
+            'skipped' => $skipCount,
+            'total_now' => $total
+        ]);
+    }
 }
