@@ -80,6 +80,10 @@
         <!-- Quick Search Bar -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <form action="{{ route('search') }}" method="GET" class="flex flex-col md:flex-row gap-4">
+                <!-- Pass search type if available, auto-detect otherwise -->
+                @if($searchType)
+                    <input type="hidden" name="search_type" value="{{ $searchType }}">
+                @endif
                 <div class="flex-grow">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

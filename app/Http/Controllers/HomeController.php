@@ -93,18 +93,20 @@ class HomeController extends Controller
         $voterQuery = Voter::query();
         
         // Auto-detect search type if query is provided but no specific type
-        if ($query && (!$searchType || $searchType === 'name')) {
+        if ($query && !$searchType) {
             // Check if it's a number (voter ID or serial)
             if ($this->isNumeric($query)) {
-                $queryBengali = $this->englishToBengali($query);
                 $queryEnglish = $this->bengaliToEnglish($query);
                 
-                // If length is 13+, it's likely a voter ID
+                // If length is 10+, it's likely a voter ID
                 if (strlen($queryEnglish) >= 10) {
                     $searchType = 'voter_id';
                 } else {
                     $searchType = 'serial_no';
                 }
+            } else {
+                // Text query - default to name search
+                $searchType = 'name';
             }
         }
         
