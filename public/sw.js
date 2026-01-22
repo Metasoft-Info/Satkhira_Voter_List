@@ -1,7 +1,7 @@
 // Service Worker for সাতক্ষীরা-২ ভোটার তালিকা PWA
-const CACHE_NAME = 'satkhira-voter-v1';
-const STATIC_CACHE = 'satkhira-static-v1';
-const DATA_CACHE = 'satkhira-data-v1';
+const CACHE_NAME = 'satkhira-voter-v2';
+const STATIC_CACHE = 'satkhira-static-v2';
+const DATA_CACHE = 'satkhira-data-v2';
 
 // Files to cache immediately
 const STATIC_FILES = [

@@ -10,6 +10,22 @@ use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
+    /**
+     * Get database-agnostic string concatenation
+     * SQLite uses || operator, MySQL uses CONCAT()
+     */
+    private function concatFields(...$fields): string
+    {
+        $driver = DB::connection()->getDriverName();
+        
+        if ($driver === 'sqlite') {
+            return implode(" || ", $fields);
+        }
+        
+        // MySQL, PostgreSQL, etc.
+        return "CONCAT(" . implode(", ", $fields) . ")";
+    }
+
     public function index()
     {
         $banners = Banner::active()->orderBy('order')->get();
@@ -199,8 +215,10 @@ class HomeController extends Controller
         $union = $request->input('union');
         $ward = $request->input('ward');
         
+        $concat = $this->concatFields("area_code", "' - '", "area_name");
+        
         $areaCodes = Voter::select(
-                DB::raw("area_code || ' - ' || area_name as name"),
+                DB::raw("{$concat} as name"),
                 'area_code',
                 DB::raw('count(*) as count')
             )
@@ -223,8 +241,10 @@ class HomeController extends Controller
         $ward = $request->input('ward');
         $areaCode = $request->input('area_code');
         
+        $concat = $this->concatFields("center_no", "' - '", "center_name");
+        
         $query = Voter::select(
-                DB::raw("center_no || ' - ' || center_name as name"),
+                DB::raw("{$concat} as name"),
                 'center_name',
                 DB::raw('count(*) as count')
             )

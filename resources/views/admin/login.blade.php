@@ -107,13 +107,6 @@
                 </a>
             </div>
         </div>
-
-        <!-- Info Box -->
-        <div class="mt-6 text-center text-white text-sm bg-white bg-opacity-20 backdrop-blur-lg rounded-lg p-4">
-            <p class="font-semibold mb-1">ডিফল্ট লগইন তথ্য:</p>
-            <p>ইমেইল: admin@satkhira.com</p>
-            <p>পাসওয়ার্ড: admin123</p>
-        </div>
     </div>
 </body>
 </html>

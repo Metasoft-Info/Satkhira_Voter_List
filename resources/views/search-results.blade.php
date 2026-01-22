@@ -129,75 +129,137 @@
 
         <!-- Results -->
         @if($voters->count() > 0)
-            <div class="grid gap-4">
+            <div class="grid gap-6">
                 @foreach($voters as $voter)
-                    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
-                        <div class="flex flex-col md:flex-row justify-between">
-                            <div class="flex-grow">
-                                <div class="flex items-center mb-3">
-                                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                                        <i class="fas fa-user text-purple-600 text-xl"></i>
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
+                        <!-- Card Header - Center Info -->
+                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-building text-lg"></i>
                                     </div>
                                     <div>
-                                        <h3 class="text-lg font-bold text-gray-800">{{ $voter->name }}</h3>
-                                        <p class="text-purple-600 font-mono text-sm">ভোটার আইডি: {{ $voter->voter_id }}</p>
+                                        <p class="text-sm text-purple-200">কেন্দ্র</p>
+                                        <p class="font-bold text-lg">{{ $voter->center_no }} - {{ $voter->center_name }}</p>
                                     </div>
                                 </div>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 text-sm">
-                                    <div>
-                                        <span class="text-gray-500">পিতার নাম:</span>
-                                        <span class="text-gray-800 font-medium ml-1">{{ $voter->father_name }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-500">মাতার নাম:</span>
-                                        <span class="text-gray-800 font-medium ml-1">{{ $voter->mother_name }}</span>
-                                    </div>
-                                    @if($voter->spouse_name)
-                                    <div>
-                                        <span class="text-gray-500">স্বামী/স্ত্রীর নাম:</span>
-                                        <span class="text-gray-800 font-medium ml-1">{{ $voter->spouse_name }}</span>
-                                    </div>
-                                    @endif
-                                    <div>
-                                        <span class="text-gray-500">জন্ম তারিখ:</span>
-                                        <span class="text-gray-800 font-medium ml-1">{{ $voter->date_of_birth }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-500">পেশা:</span>
-                                        <span class="text-gray-800 font-medium ml-1">{{ $voter->occupation }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-500">লিঙ্গ:</span>
-                                        <span class="text-gray-800 font-medium ml-1">{{ $voter->gender }}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 flex flex-wrap gap-2">
-                                    <span class="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">
-                                        <i class="fas fa-building mr-1"></i>
-                                        {{ $voter->center_name }}
-                                    </span>
-                                    @if($voter->ward_no)
-                                    <span class="inline-flex items-center bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">
-                                        <i class="fas fa-map mr-1"></i>
-                                        ওয়ার্ড: {{ $voter->ward_no }}
-                                    </span>
-                                    @endif
-                                    <span class="inline-flex items-center bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">
-                                        <i class="fas fa-hashtag mr-1"></i>
-                                        সিরিয়াল: {{ $voter->serial_no }}
-                                    </span>
+                                <div class="text-right">
+                                    <p class="text-sm text-purple-200">সিরিয়াল</p>
+                                    <p class="font-bold text-2xl">{{ $voter->serial_no }}</p>
                                 </div>
                             </div>
                         </div>
                         
-                        @if($voter->address)
-                        <div class="mt-4 pt-4 border-t border-gray-100">
-                            <span class="text-gray-500 text-sm"><i class="fas fa-map-marker-alt mr-1"></i> ঠিকানা:</span>
-                            <span class="text-gray-700 text-sm ml-1">{{ $voter->address }}</span>
+                        <!-- Card Body -->
+                        <div class="p-6">
+                            <!-- Name & Voter ID -->
+                            <div class="flex items-start mb-6">
+                                <div class="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                    <i class="fas fa-user text-purple-600 text-2xl"></i>
+                                </div>
+                                <div class="flex-grow">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-1">{{ $voter->name }}</h3>
+                                    <div class="flex items-center text-purple-600">
+                                        <i class="fas fa-id-card mr-2"></i>
+                                        <span class="font-mono font-semibold">{{ $voter->voter_id }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    @if($voter->gender == 'পুরুষ')
+                                        <span class="inline-flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                                            <i class="fas fa-mars mr-1"></i>
+                                            পুরুষ
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-medium">
+                                            <i class="fas fa-venus mr-1"></i>
+                                            মহিলা
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <!-- Info Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <!-- DOB -->
+                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
+                                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-birthday-cake text-orange-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">জন্ম তারিখ</p>
+                                        <p class="font-semibold text-gray-800">{{ $voter->date_of_birth ?? 'N/A' }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Occupation -->
+                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-briefcase text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">পেশা</p>
+                                        <p class="font-semibold text-gray-800">{{ $voter->occupation ?? 'N/A' }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Father Name -->
+                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-male text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">পিতার নাম</p>
+                                        <p class="font-semibold text-gray-800">{{ $voter->father_name ?? 'N/A' }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mother Name -->
+                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
+                                    <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-female text-pink-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">মাতার নাম</p>
+                                        <p class="font-semibold text-gray-800">{{ $voter->mother_name ?? 'N/A' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Address Section -->
+                            <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                        <i class="fas fa-map-marker-alt text-red-600"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-xs text-gray-500 mb-1">ঠিকানা</p>
+                                        <div class="flex flex-wrap gap-2 mb-2">
+                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
+                                                <i class="fas fa-city text-purple-500 mr-1"></i>
+                                                {{ $voter->upazila }}
+                                            </span>
+                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
+                                                <i class="fas fa-landmark text-blue-500 mr-1"></i>
+                                                {{ $voter->union }}
+                                            </span>
+                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
+                                                <i class="fas fa-map text-green-500 mr-1"></i>
+                                                ওয়ার্ড: {{ $voter->ward }}
+                                            </span>
+                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
+                                                <i class="fas fa-home text-orange-500 mr-1"></i>
+                                                {{ $voter->area_code }} - {{ $voter->area_name }}
+                                            </span>
+                                        </div>
+                                        @if($voter->address)
+                                            <p class="text-sm text-gray-600">{{ $voter->address }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        @endif
                     </div>
                 @endforeach
             </div>
