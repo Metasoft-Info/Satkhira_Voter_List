@@ -243,7 +243,7 @@
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none">
                                 <option value="">সকল উপজেলা</option>
                                 @foreach($upazilas as $upazila)
-                                    <option value="{{ $upazila['name'] }}">{{ $upazila['name'] }} ({{ $upazila['count'] }})</option>
+                                    <option value="{{ $upazila['name'] }}">{{ $upazila['name'] }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -258,7 +258,7 @@
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
                                 <option value="">সকল ইউনিয়ন</option>
                                 <template x-for="union in unions" :key="union.name">
-                                    <option :value="union.name" x-text="union.name + ' (' + union.count + ')'"></option>
+                                    <option :value="union.name" x-text="union.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -273,7 +273,7 @@
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
                                 <option value="">সকল ওয়ার্ড</option>
                                 <template x-for="ward in wards" :key="ward.name">
-                                    <option :value="ward.name" x-text="ward.name + ' (' + ward.count + ')'"></option>
+                                    <option :value="ward.name" x-text="ward.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -288,7 +288,7 @@
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
                                 <option value="">সকল এরিয়া কোড</option>
                                 <template x-for="area in areaCodes" :key="area.area_code">
-                                    <option :value="area.area_code" x-text="area.name + ' (' + area.count + ')'"></option>
+                                    <option :value="area.area_code" x-text="area.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -303,7 +303,7 @@
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
                                 <option value="">সকল কেন্দ্র</option>
                                 <template x-for="center in centers" :key="center.center_name">
-                                    <option :value="center.center_name" x-text="center.name + ' (' + center.count + ')'"></option>
+                                    <option :value="center.center_name" x-text="center.name"></option>
                                 </template>
                             </select>
                         </div>
