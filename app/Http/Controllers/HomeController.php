@@ -33,7 +33,7 @@ class HomeController extends Controller
         
         $totalVoters = Voter::count();
         $maleVoters = Voter::where('gender', 'পুরুষ')->count();
-        $femaleVoters = Voter::where('gender', 'মহলিা')->count();
+        $femaleVoters = Voter::where('gender', 'মহিলা')->count();
         $centerCount = Voter::distinct('center_name')->count('center_name');
         
         // Get upazilas with counts
@@ -45,6 +45,15 @@ class HomeController extends Controller
             ->get()
             ->toArray();
         
+        // Get all distinct genders dynamically from database
+        $genders = Voter::select('gender')
+            ->whereNotNull('gender')
+            ->where('gender', '!=', '')
+            ->distinct()
+            ->orderBy('gender')
+            ->pluck('gender')
+            ->toArray();
+        
         return view('home', compact(
             'banners', 
             'breakingNews', 
@@ -52,7 +61,8 @@ class HomeController extends Controller
             'maleVoters', 
             'femaleVoters', 
             'centerCount',
-            'upazilas'
+            'upazilas',
+            'genders'
         ));
     }
     

@@ -241,7 +241,7 @@
                                     x-model="selectedUpazila"
                                     @change="onUpazilaChange()"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none">
-                                <option value="">সকল উপজেলা</option>
+                                <option value="">-- উপজেলা নির্বাচন করুন --</option>
                                 @foreach($upazilas as $upazila)
                                     <option value="{{ $upazila['name'] }}">{{ $upazila['name'] }}</option>
                                 @endforeach
@@ -250,13 +250,13 @@
 
                         <!-- Union -->
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">ইউনিয়ন</label>
+                            <label class="block text-sm text-gray-600 mb-1">পৌরসভা/ইউনিয়ন</label>
                             <select name="union" 
                                     x-model="selectedUnion"
                                     @change="onUnionChange()"
                                     :disabled="!selectedUpazila"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
-                                <option value="">সকল ইউনিয়ন</option>
+                                <option value="">-- পৌরসভা/ইউনিয়ন নির্বাচন করুন --</option>
                                 <template x-for="union in unions" :key="union.name">
                                     <option :value="union.name" x-text="union.name"></option>
                                 </template>
@@ -271,7 +271,7 @@
                                     @change="onWardChange()"
                                     :disabled="!selectedUnion"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
-                                <option value="">সকল ওয়ার্ড</option>
+                                <option value="">-- ওয়ার্ড নির্বাচন করুন --</option>
                                 <template x-for="ward in wards" :key="ward.name">
                                     <option :value="ward.name" x-text="ward.name"></option>
                                 </template>
@@ -283,27 +283,12 @@
                             <label class="block text-sm text-gray-600 mb-1">এরিয়া কোড</label>
                             <select name="area_code" 
                                     x-model="selectedAreaCode"
-                                    @change="onAreaCodeChange()"
+                                    @change="updateEstimate()"
                                     :disabled="!selectedWard"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
-                                <option value="">সকল এরিয়া কোড</option>
+                                <option value="">-- এরিয়া কোড নির্বাচন করুন --</option>
                                 <template x-for="area in areaCodes" :key="area.area_code">
                                     <option :value="area.area_code" x-text="area.name"></option>
-                                </template>
-                            </select>
-                        </div>
-
-                        <!-- Center -->
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">কেন্দ্র</label>
-                            <select name="center" 
-                                    x-model="selectedCenter"
-                                    @change="updateEstimate()"
-                                    :disabled="!selectedAreaCode"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
-                                <option value="">সকল কেন্দ্র</option>
-                                <template x-for="center in centers" :key="center.center_name">
-                                    <option :value="center.center_name" x-text="center.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -315,9 +300,10 @@
                                     x-model="selectedGender"
                                     @change="updateEstimate()"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none">
-                                <option value="">সকল</option>
-                                <option value="পুরুষ">পুরুষ</option>
-                                <option value="মহিলা">মহিলা</option>
+                                <option value="">-- লিঙ্গ নির্বাচন করুন --</option>
+                                @foreach($genders as $gender)
+                                    <option value="{{ $gender }}">{{ $gender }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -437,12 +423,10 @@
                 selectedUnion: '',
                 selectedWard: '',
                 selectedAreaCode: '',
-                selectedCenter: '',
                 selectedGender: '',
                 unions: [],
                 wards: [],
                 areaCodes: [],
-                centers: [],
                 estimatedCount: 0,
 
                 init() {
@@ -473,7 +457,7 @@
 
                 hasFilters() {
                     return this.selectedUpazila || this.selectedUnion || this.selectedWard || 
-                           this.selectedAreaCode || this.selectedCenter || this.selectedGender;
+                           this.selectedAreaCode || this.selectedGender;
                 },
 
                 canSearch() {
@@ -484,11 +468,9 @@
                     this.selectedUnion = '';
                     this.selectedWard = '';
                     this.selectedAreaCode = '';
-                    this.selectedCenter = '';
                     this.unions = [];
                     this.wards = [];
                     this.areaCodes = [];
-                    this.centers = [];
 
                     if (this.selectedUpazila) {
                         const response = await fetch(`/api/filter/unions?upazila=${encodeURIComponent(this.selectedUpazila)}`);
@@ -500,10 +482,8 @@
                 async onUnionChange() {
                     this.selectedWard = '';
                     this.selectedAreaCode = '';
-                    this.selectedCenter = '';
                     this.wards = [];
                     this.areaCodes = [];
-                    this.centers = [];
 
                     if (this.selectedUnion) {
                         const response = await fetch(`/api/filter/wards?upazila=${encodeURIComponent(this.selectedUpazila)}&union=${encodeURIComponent(this.selectedUnion)}`);
@@ -514,24 +494,11 @@
 
                 async onWardChange() {
                     this.selectedAreaCode = '';
-                    this.selectedCenter = '';
                     this.areaCodes = [];
-                    this.centers = [];
 
                     if (this.selectedWard) {
                         const response = await fetch(`/api/filter/area-codes?upazila=${encodeURIComponent(this.selectedUpazila)}&union=${encodeURIComponent(this.selectedUnion)}&ward=${encodeURIComponent(this.selectedWard)}`);
                         this.areaCodes = await response.json();
-                        this.updateEstimate();
-                    }
-                },
-
-                async onAreaCodeChange() {
-                    this.selectedCenter = '';
-                    this.centers = [];
-
-                    if (this.selectedAreaCode) {
-                        const response = await fetch(`/api/filter/centers?upazila=${encodeURIComponent(this.selectedUpazila)}&union=${encodeURIComponent(this.selectedUnion)}&ward=${encodeURIComponent(this.selectedWard)}&area_code=${encodeURIComponent(this.selectedAreaCode)}`);
-                        this.centers = await response.json();
                         this.updateEstimate();
                     }
                 },
@@ -542,7 +509,6 @@
                     if (this.selectedUnion) params.append('union', this.selectedUnion);
                     if (this.selectedWard) params.append('ward', this.selectedWard);
                     if (this.selectedAreaCode) params.append('area_code', this.selectedAreaCode);
-                    if (this.selectedCenter) params.append('center', this.selectedCenter);
                     if (this.selectedGender) params.append('gender', this.selectedGender);
 
                     const response = await fetch(`/api/filter/count?${params.toString()}`);

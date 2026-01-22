@@ -133,137 +133,113 @@
 
         <!-- Results -->
         @if($voters->count() > 0)
-            <div class="grid gap-6">
-                @foreach($voters as $voter)
-                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
-                        <!-- Card Header - Center Info -->
-                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4">
-                            <div class="flex items-center justify-between">
+            <div class="grid gap-4">
+                @foreach($voters as $index => $voter)
+                    <div id="voter-card-{{ $voter->id }}" class="bg-white rounded-lg shadow hover:shadow-md transition-all duration-200 border border-gray-200 p-4">
+                        <!-- Simple Card Content -->
+                        <div class="space-y-2 text-sm">
+                            <!-- Row 1: Center & Serial -->
+                            <div class="flex flex-wrap gap-x-6 gap-y-1 pb-2 border-b border-gray-100">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-building text-lg"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-purple-200">কেন্দ্র</p>
-                                        <p class="font-bold text-lg">{{ $voter->center_no }} - {{ $voter->center_name }}</p>
-                                    </div>
+                                    <span class="text-gray-500 w-16">কেন্দ্র:</span>
+                                    <span class="font-semibold text-purple-700">{{ $voter->center_no }} - {{ $voter->center_name }}</span>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-sm text-purple-200">সিরিয়াল</p>
-                                    <p class="font-bold text-2xl">{{ $voter->serial_no }}</p>
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-16">সিরিয়াল:</span>
+                                    <span class="font-bold text-gray-800">{{ $voter->serial_no }}</span>
                                 </div>
+                            </div>
+                            
+                            <!-- Row 2: Name & Voter ID -->
+                            <div class="flex flex-wrap gap-x-6 gap-y-1">
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-16">নাম:</span>
+                                    <span class="font-bold text-gray-900 text-base">{{ $voter->name }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-16">ভোটার নং:</span>
+                                    <span class="font-mono font-semibold text-purple-600">{{ $voter->voter_id }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Row 3: Gender & DOB -->
+                            <div class="flex flex-wrap gap-x-6 gap-y-1">
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-16">লিঙ্গ:</span>
+                                    <span class="font-medium {{ $voter->gender == 'পুরুষ' ? 'text-blue-600' : ($voter->gender == 'মহিলা' ? 'text-pink-600' : 'text-purple-600') }}">{{ $voter->gender }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-20">জন্ম তারিখ:</span>
+                                    <span class="font-medium text-gray-700">{{ $voter->date_of_birth ?? 'N/A' }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Row 4: Occupation -->
+                            <div class="flex items-center">
+                                <span class="text-gray-500 w-16">পেশা:</span>
+                                <span class="font-medium text-gray-700">{{ $voter->occupation ?? 'N/A' }}</span>
+                            </div>
+                            
+                            <!-- Row 5: Father & Mother -->
+                            <div class="flex flex-wrap gap-x-6 gap-y-1">
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-20">পিতার নাম:</span>
+                                    <span class="font-medium text-gray-700">{{ $voter->father_name ?? 'N/A' }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-20">মাতার নাম:</span>
+                                    <span class="font-medium text-gray-700">{{ $voter->mother_name ?? 'N/A' }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Row 6: Address -->
+                            <div class="flex items-start pt-2 border-t border-gray-100">
+                                <span class="text-gray-500 w-16 flex-shrink-0">ঠিকানা:</span>
+                                <span class="font-medium text-gray-700">
+                                    {{ $voter->upazila }}, {{ $voter->union }}, ওয়ার্ড: {{ $voter->ward }}, {{ $voter->area_name ?? $voter->area_code }}
+                                    @if($voter->address), {{ $voter->address }}@endif
+                                </span>
                             </div>
                         </div>
                         
-                        <!-- Card Body -->
-                        <div class="p-6">
-                            <!-- Name & Voter ID -->
-                            <div class="flex items-start mb-6">
-                                <div class="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-user text-purple-600 text-2xl"></i>
-                                </div>
-                                <div class="flex-grow">
-                                    <h3 class="text-xl font-bold text-gray-800 mb-1">{{ $voter->name }}</h3>
-                                    <div class="flex items-center text-purple-600">
-                                        <i class="fas fa-id-card mr-2"></i>
-                                        <span class="font-mono font-semibold">{{ $voter->voter_id }}</span>
-                                    </div>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    @if($voter->gender == 'পুরুষ')
-                                        <span class="inline-flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                                            <i class="fas fa-mars mr-1"></i>
-                                            পুরুষ
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-medium">
-                                            <i class="fas fa-venus mr-1"></i>
-                                            মহিলা
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                            
-                            <!-- Info Grid -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <!-- DOB -->
-                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
-                                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-birthday-cake text-orange-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500">জন্ম তারিখ</p>
-                                        <p class="font-semibold text-gray-800">{{ $voter->date_of_birth ?? 'N/A' }}</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Occupation -->
-                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
-                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-briefcase text-green-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500">পেশা</p>
-                                        <p class="font-semibold text-gray-800">{{ $voter->occupation ?? 'N/A' }}</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Father Name -->
-                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-male text-blue-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500">পিতার নাম</p>
-                                        <p class="font-semibold text-gray-800">{{ $voter->father_name ?? 'N/A' }}</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Mother Name -->
-                                <div class="flex items-center bg-gray-50 rounded-lg p-3">
-                                    <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-female text-pink-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500">মাতার নাম</p>
-                                        <p class="font-semibold text-gray-800">{{ $voter->mother_name ?? 'N/A' }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Address Section -->
-                            <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
-                                <div class="flex items-start">
-                                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                                        <i class="fas fa-map-marker-alt text-red-600"></i>
-                                    </div>
-                                    <div class="flex-grow">
-                                        <p class="text-xs text-gray-500 mb-1">ঠিকানা</p>
-                                        <div class="flex flex-wrap gap-2 mb-2">
-                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
-                                                <i class="fas fa-city text-purple-500 mr-1"></i>
-                                                {{ $voter->upazila }}
-                                            </span>
-                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
-                                                <i class="fas fa-landmark text-blue-500 mr-1"></i>
-                                                {{ $voter->union }}
-                                            </span>
-                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
-                                                <i class="fas fa-map text-green-500 mr-1"></i>
-                                                ওয়ার্ড: {{ $voter->ward }}
-                                            </span>
-                                            <span class="inline-flex items-center bg-white text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
-                                                <i class="fas fa-home text-orange-500 mr-1"></i>
-                                                {{ $voter->area_code }} - {{ $voter->area_name }}
-                                            </span>
-                                        </div>
-                                        @if($voter->address)
-                                            <p class="text-sm text-gray-600">{{ $voter->address }}</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Share & Copy Buttons -->
+                        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                            <button onclick="shareVoter({{ $voter->id }}, '{{ addslashes($voter->name) }}')" 
+                                    class="flex items-center gap-1 text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-full transition">
+                                <i class="fab fa-whatsapp"></i>
+                                <span>WhatsApp</span>
+                            </button>
+                            <button onclick="shareVoterNative({{ $voter->id }})" 
+                                    class="flex items-center gap-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-full transition">
+                                <i class="fas fa-share-alt"></i>
+                                <span>শেয়ার</span>
+                            </button>
+                            <button onclick="copyVoterData({{ $voter->id }})" 
+                                    class="flex items-center gap-1 text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full transition">
+                                <i class="fas fa-copy"></i>
+                                <span>কপি</span>
+                            </button>
                         </div>
+                        
+                        <!-- Hidden data for sharing -->
+                        <script type="application/json" id="voter-data-{{ $voter->id }}">
+                            {
+                                "id": {{ $voter->id }},
+                                "name": "{{ $voter->name }}",
+                                "voter_id": "{{ $voter->voter_id }}",
+                                "serial_no": "{{ $voter->serial_no }}",
+                                "gender": "{{ $voter->gender }}",
+                                "dob": "{{ $voter->date_of_birth ?? 'N/A' }}",
+                                "occupation": "{{ $voter->occupation ?? 'N/A' }}",
+                                "father": "{{ $voter->father_name ?? 'N/A' }}",
+                                "mother": "{{ $voter->mother_name ?? 'N/A' }}",
+                                "center": "{{ $voter->center_no }} - {{ $voter->center_name }}",
+                                "upazila": "{{ $voter->upazila }}",
+                                "union": "{{ $voter->union }}",
+                                "ward": "{{ $voter->ward }}",
+                                "area": "{{ $voter->area_name ?? $voter->area_code }}"
+                            }
+                        </script>
                     </div>
                 @endforeach
             </div>
@@ -303,5 +279,132 @@
             <p class="mt-2 text-gray-500">Developed by <span class="text-purple-400 font-medium">Mir Javed Jeetu</span></p>
         </div>
     </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        // Show toast notification
+        function showToast(message, duration = 2000) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, duration);
+        }
+
+        // Get voter data from JSON script tag
+        function getVoterData(voterId) {
+            const script = document.getElementById('voter-data-' + voterId);
+            if (script) {
+                return JSON.parse(script.textContent);
+            }
+            return null;
+        }
+
+        // Format voter data as text
+        function formatVoterText(data) {
+            return `📋 *ভোটার তথ্য*
+━━━━━━━━━━━━━━━
+🏢 *কেন্দ্র:* ${data.center}
+📝 *সিরিয়াল:* ${data.serial_no}
+👤 *নাম:* ${data.name}
+🆔 *ভোটার নং:* ${data.voter_id}
+⚧ *লিঙ্গ:* ${data.gender}
+📅 *জন্ম তারিখ:* ${data.dob}
+💼 *পেশা:* ${data.occupation}
+👨 *পিতার নাম:* ${data.father}
+👩 *মাতার নাম:* ${data.mother}
+📍 *ঠিকানা:* ${data.upazila}, ${data.union}, ওয়ার্ড: ${data.ward}, ${data.area}
+━━━━━━━━━━━━━━━
+🌐 সাতক্ষীরা-২ ভোটার তালিকা`;
+        }
+
+        // Share to WhatsApp
+        function shareVoter(voterId, voterName) {
+            const data = getVoterData(voterId);
+            if (!data) {
+                showToast('ডাটা পাওয়া যায়নি');
+                return;
+            }
+            
+            const text = formatVoterText(data);
+            const whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(text);
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Native share API
+        function shareVoterNative(voterId) {
+            const data = getVoterData(voterId);
+            if (!data) {
+                showToast('ডাটা পাওয়া যায়নি');
+                return;
+            }
+            
+            const text = formatVoterText(data);
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'ভোটার তথ্য - ' + data.name,
+                    text: text,
+                    url: window.location.href
+                }).then(() => {
+                    showToast('শেয়ার করা হয়েছে');
+                }).catch((err) => {
+                    // User cancelled or error
+                    if (err.name !== 'AbortError') {
+                        copyToClipboard(text);
+                        showToast('লিংক কপি করা হয়েছে');
+                    }
+                });
+            } else {
+                // Fallback - copy to clipboard
+                copyToClipboard(text);
+                showToast('টেক্সট কপি করা হয়েছে');
+            }
+        }
+
+        // Copy voter data to clipboard
+        function copyVoterData(voterId) {
+            const data = getVoterData(voterId);
+            if (!data) {
+                showToast('ডাটা পাওয়া যায়নি');
+                return;
+            }
+            
+            const text = formatVoterText(data);
+            copyToClipboard(text);
+            showToast('✓ কপি করা হয়েছে');
+        }
+
+        // Helper function to copy to clipboard
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Copy failed:', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
 </body>
 </html>
