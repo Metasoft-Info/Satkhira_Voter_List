@@ -61,7 +61,7 @@
 
             <!-- File Upload -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">এক্সেল ফাইল (.xlsx)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ডেটা ফাইল (.xlsx, .csv)</label>
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-purple-400 transition">
                     <div class="space-y-1 text-center">
                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -70,11 +70,12 @@
                         <div class="flex text-sm text-gray-600">
                             <label class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500">
                                 <span>ফাইল নির্বাচন করুন</span>
-                                <input type="file" name="excel_file" accept=".xlsx,.xls" class="sr-only" required id="excel_file">
+                                <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" class="sr-only" required id="excel_file">
                             </label>
                             <p class="pl-1">অথবা ড্র্যাগ করে ছেড়ে দিন</p>
                         </div>
-                        <p class="text-xs text-gray-500">XLSX, XLS (সর্বোচ্চ 50MB)</p>
+                        <p class="text-xs text-gray-500">XLSX, XLS (সর্বোচ্চ ৫০,০০০ রেকর্ড) | CSV (৫ লক্ষ+ রেকর্ড সাপোর্ট)</p>
+                        <p class="text-xs text-green-600 font-medium">💡 বড় ফাইলের জন্য CSV ব্যবহার করুন (Excel → Save As → CSV UTF-8)</p>
                         <p id="file_name" class="text-sm font-medium text-purple-600 mt-2"></p>
                     </div>
                 </div>

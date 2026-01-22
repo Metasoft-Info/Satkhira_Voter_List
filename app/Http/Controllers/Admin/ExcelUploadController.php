@@ -15,18 +15,17 @@ use Illuminate\Support\Facades\DB;
  */
 class ChunkReadFilter implements IReadFilter
 {
-    private int $startRow;
-    private int $endRow;
+    private $startRow;
+    private $endRow;
 
-    public function __construct(int $startRow, int $endRow)
+    public function __construct($startRow, $endRow)
     {
         $this->startRow = $startRow;
         $this->endRow = $endRow;
     }
 
-    public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
+    public function readCell($columnAddress, $row, $worksheetName = ''): bool
     {
-        // Always read row 1 (header) and rows within our chunk
         if ($row === 1 || ($row >= $this->startRow && $row <= $this->endRow)) {
             return true;
         }
@@ -47,13 +46,13 @@ class ExcelUploadController extends Controller
     }
 
     /**
-     * Smart Upload - Only update changed data, don't replace all
-     * Uses chunk reading for memory efficiency
+     * Upload handler - supports both CSV and XLSX
+     * CSV is recommended for large files (5 lakh+ records)
      */
     public function upload(Request $request)
     {
         $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls|max:100000',
+            'excel_file' => 'required|file|mimes:xlsx,xls,csv,txt|max:500000',
             'upload_mode' => 'required|in:smart,replace',
         ]);
 
@@ -67,143 +66,269 @@ class ExcelUploadController extends Controller
         }
 
         $mode = $request->input('upload_mode', 'smart');
+        $file = $request->file('excel_file');
+        $extension = strtolower($file->getClientOriginalExtension());
 
         try {
-            // Save uploaded file temporarily
-            $file = $request->file('excel_file');
-            $tempPath = $file->getRealPath();
-            
-            // Use chunk reader filter to read in smaller pieces
-            $reader = IOFactory::createReader('Xlsx');
-            $reader->setReadDataOnly(true);
-            $reader->setReadEmptyCells(false);
-            
-            // First, get total rows count only
-            $spreadsheetInfo = $reader->listWorksheetInfo($tempPath);
-            $totalRows = $spreadsheetInfo[0]['totalRows'] ?? 0;
-            
-            if ($totalRows <= 1) {
-                return redirect()->route('admin.upload')
-                    ->with('error', 'এক্সেল ফাইলে কোন ডেটা নেই!');
+            // Route to appropriate handler based on file type
+            if (in_array($extension, ['csv', 'txt'])) {
+                return $this->uploadCsv($file, $mode);
+            } else {
+                return $this->uploadExcel($file, $mode);
             }
-
-            DB::beginTransaction();
-
-            // If replace mode, truncate first
-            if ($mode === 'replace') {
-                Voter::truncate();
-            }
-
-            // Get existing voter IDs for comparison (only in smart mode)
-            $existingVoters = [];
-            if ($mode === 'smart') {
-                $existingVoters = Voter::pluck('id', 'voter_id')->toArray();
-            }
-
-            $newCount = 0;
-            $updateCount = 0;
-            $skipCount = 0;
-            $chunkSize = 500;
-            
-            // Process in chunks
-            for ($startRow = 2; $startRow <= $totalRows; $startRow += $chunkSize) {
-                $endRow = min($startRow + $chunkSize - 1, $totalRows);
-                
-                // Create chunk filter
-                $chunkFilter = new ChunkReadFilter($startRow, $endRow);
-                $reader->setReadFilter($chunkFilter);
-                
-                // Load only this chunk
-                $spreadsheet = $reader->load($tempPath);
-                $sheet = $spreadsheet->getActiveSheet();
-                
-                $insertBatch = [];
-                $updateBatch = [];
-                
-                for ($row = $startRow; $row <= $endRow; $row++) {
-                    $rowData = [];
-                    for ($col = 1; $col <= 17; $col++) {
-                        $cell = $sheet->getCellByColumnAndRow($col, $row);
-                        $rowData[] = $cell ? $cell->getValue() : null;
-                    }
-
-                    // Skip empty rows
-                    if (empty($rowData[0]) && empty($rowData[10])) {
-                        $skipCount++;
-                        continue;
-                    }
-
-                    $voterId = $rowData[11] ?? null;
-                    
-                    // Get Bengali values
-                    $nameBn = $rowData[10] ?? null;
-                    $fatherNameBn = $rowData[12] ?? null;
-                    $motherNameBn = $rowData[13] ?? null;
-                    $occupationBn = $rowData[14] ?? null;
-                    $addressBn = $rowData[16] ?? null;
-                    
-                    $voterData = [
-                        'serial_no' => $rowData[0] ?? null,
-                        'upazila' => $rowData[1] ?? null,
-                        'union' => $rowData[2] ?? null,
-                        'ward' => $rowData[3] ?? null,
-                        'area_code' => $rowData[4] ?? null,
-                        'area_name' => $rowData[5] ?? null,
-                        'gender' => $rowData[6] ?? null,
-                        'center_no' => $rowData[7] ?? null,
-                        'center_name' => $rowData[8] ?? null,
-                        'name' => $nameBn,
-                        'name_en' => BengaliTransliterator::transliterate($nameBn),
-                        'voter_id' => $voterId,
-                        'father_name' => $fatherNameBn,
-                        'father_name_en' => BengaliTransliterator::transliterate($fatherNameBn),
-                        'mother_name' => $motherNameBn,
-                        'mother_name_en' => BengaliTransliterator::transliterate($motherNameBn),
-                        'occupation' => $occupationBn,
-                        'profession_en' => BengaliTransliterator::transliterate($occupationBn),
-                        'date_of_birth' => $rowData[15] ?? null,
-                        'address' => $addressBn,
-                        'address_en' => BengaliTransliterator::transliterate($addressBn),
-                        'updated_at' => now(),
-                    ];
-
-                    if ($mode === 'smart' && $voterId && isset($existingVoters[$voterId])) {
-                        $updateBatch[] = array_merge($voterData, ['id' => $existingVoters[$voterId]]);
-                        $updateCount++;
-                    } else {
-                        $voterData['created_at'] = now();
-                        $insertBatch[] = $voterData;
-                        $newCount++;
-                    }
-                }
-                
-                // Insert/Update this chunk
-                if (!empty($insertBatch)) {
-                    Voter::insert($insertBatch);
-                }
-                if (!empty($updateBatch)) {
-                    $this->batchUpdate($updateBatch);
-                }
-                
-                // Free memory
-                $spreadsheet->disconnectWorksheets();
-                unset($spreadsheet, $sheet, $insertBatch, $updateBatch);
-                gc_collect_cycles();
-            }
-
-            DB::commit();
-
-            $message = $mode === 'smart' 
-                ? "স্মার্ট আপলোড সফল! নতুন: {$newCount}, আপডেট: {$updateCount}, স্কিপ: {$skipCount}"
-                : "রিপ্লেস আপলোড সফল! মোট: " . ($newCount + $updateCount) . " রেকর্ড";
-
-            return redirect()->route('admin.upload')->with('success', $message);
-
         } catch (\Exception $e) {
-            DB::rollBack();
             return redirect()->route('admin.upload')
                 ->with('error', 'আপলোড ব্যর্থ: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * CSV Upload - Super fast for large files (5 lakh+ records)
+     * Reads line by line without loading entire file into memory
+     */
+    private function uploadCsv($file, $mode)
+    {
+        $handle = fopen($file->getRealPath(), 'r');
+        if (!$handle) {
+            throw new \Exception('ফাইল খুলতে পারছি না');
+        }
+
+        // Skip header row
+        fgetcsv($handle);
+
+        DB::beginTransaction();
+
+        if ($mode === 'replace') {
+            Voter::truncate();
+        }
+
+        $existingVoters = [];
+        if ($mode === 'smart') {
+            $existingVoters = Voter::pluck('id', 'voter_id')->toArray();
+        }
+
+        $newCount = 0;
+        $updateCount = 0;
+        $skipCount = 0;
+        $batchSize = 1000;
+        $insertBatch = [];
+        $updateBatch = [];
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 12 || (empty($row[0]) && empty($row[10]))) {
+                $skipCount++;
+                continue;
+            }
+
+            $voterId = $row[11] ?? null;
+            $nameBn = $row[10] ?? null;
+            $fatherNameBn = $row[12] ?? null;
+            $motherNameBn = $row[13] ?? null;
+            $occupationBn = $row[14] ?? null;
+            $addressBn = $row[16] ?? null;
+
+            $voterData = [
+                'serial_no' => $row[0] ?? null,
+                'upazila' => $row[1] ?? null,
+                'union' => $row[2] ?? null,
+                'ward' => $row[3] ?? null,
+                'area_code' => $row[4] ?? null,
+                'area_name' => $row[5] ?? null,
+                'gender' => $row[6] ?? null,
+                'center_no' => $row[7] ?? null,
+                'center_name' => $row[8] ?? null,
+                'name' => $nameBn,
+                'name_en' => BengaliTransliterator::transliterate($nameBn),
+                'voter_id' => $voterId,
+                'father_name' => $fatherNameBn,
+                'father_name_en' => BengaliTransliterator::transliterate($fatherNameBn),
+                'mother_name' => $motherNameBn,
+                'mother_name_en' => BengaliTransliterator::transliterate($motherNameBn),
+                'occupation' => $occupationBn,
+                'profession_en' => BengaliTransliterator::transliterate($occupationBn),
+                'date_of_birth' => $row[15] ?? null,
+                'address' => $addressBn,
+                'address_en' => BengaliTransliterator::transliterate($addressBn),
+                'updated_at' => now(),
+            ];
+
+            if ($mode === 'smart' && $voterId && isset($existingVoters[$voterId])) {
+                $updateBatch[] = array_merge($voterData, ['id' => $existingVoters[$voterId]]);
+                $updateCount++;
+                
+                if (count($updateBatch) >= $batchSize) {
+                    $this->batchUpdate($updateBatch);
+                    $updateBatch = [];
+                    gc_collect_cycles();
+                }
+            } else {
+                $voterData['created_at'] = now();
+                $insertBatch[] = $voterData;
+                $newCount++;
+                
+                if (count($insertBatch) >= $batchSize) {
+                    Voter::insert($insertBatch);
+                    $insertBatch = [];
+                    gc_collect_cycles();
+                }
+            }
+        }
+
+        // Insert remaining batches
+        if (!empty($insertBatch)) {
+            Voter::insert($insertBatch);
+        }
+        if (!empty($updateBatch)) {
+            $this->batchUpdate($updateBatch);
+        }
+
+        fclose($handle);
+        DB::commit();
+
+        $message = $mode === 'smart'
+            ? "CSV আপলোড সফল! নতুন: {$newCount}, আপডেট: {$updateCount}, স্কিপ: {$skipCount}"
+            : "CSV আপলোড সফল! মোট: " . ($newCount + $updateCount) . " রেকর্ড";
+
+        return redirect()->route('admin.upload')->with('success', $message);
+    }
+
+    /**
+     * Excel Upload - For smaller files (under 50k records)
+     * Uses chunk reading to manage memory
+     */
+    private function uploadExcel($file, $mode)
+    {
+        $tempPath = $file->getRealPath();
+            
+        // Use chunk reader filter to read in smaller pieces
+        $reader = IOFactory::createReader('Xlsx');
+        $reader->setReadDataOnly(true);
+        $reader->setReadEmptyCells(false);
+        
+        // First, get total rows count only
+        $spreadsheetInfo = $reader->listWorksheetInfo($tempPath);
+        $totalRows = $spreadsheetInfo[0]['totalRows'] ?? 0;
+        
+        if ($totalRows <= 1) {
+            throw new \Exception('এক্সেল ফাইলে কোন ডেটা নেই!');
+        }
+
+        // Warn if file is too large for Excel processing
+        if ($totalRows > 50000) {
+            throw new \Exception("এক্সেল ফাইলে {$totalRows} সারি আছে। ৫০,০০০+ রেকর্ডের জন্য CSV ফাইল ব্যবহার করুন (Excel → Save As → CSV UTF-8)।");
+        }
+
+        DB::beginTransaction();
+
+        // If replace mode, truncate first
+        if ($mode === 'replace') {
+            Voter::truncate();
+        }
+
+        // Get existing voter IDs for comparison (only in smart mode)
+        $existingVoters = [];
+        if ($mode === 'smart') {
+            $existingVoters = Voter::pluck('id', 'voter_id')->toArray();
+        }
+
+        $newCount = 0;
+        $updateCount = 0;
+        $skipCount = 0;
+        $chunkSize = 500;
+        
+        // Process in chunks
+        for ($startRow = 2; $startRow <= $totalRows; $startRow += $chunkSize) {
+            $endRow = min($startRow + $chunkSize - 1, $totalRows);
+            
+            // Create chunk filter
+            $chunkFilter = new ChunkReadFilter($startRow, $endRow);
+            $reader->setReadFilter($chunkFilter);
+            
+            // Load only this chunk
+            $spreadsheet = $reader->load($tempPath);
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            $insertBatch = [];
+            $updateBatch = [];
+            
+            for ($row = $startRow; $row <= $endRow; $row++) {
+                $rowData = [];
+                for ($col = 1; $col <= 17; $col++) {
+                    $cell = $sheet->getCellByColumnAndRow($col, $row);
+                    $rowData[] = $cell ? $cell->getValue() : null;
+                }
+
+                // Skip empty rows
+                if (empty($rowData[0]) && empty($rowData[10])) {
+                    $skipCount++;
+                    continue;
+                }
+
+                $voterId = $rowData[11] ?? null;
+                
+                // Get Bengali values
+                $nameBn = $rowData[10] ?? null;
+                $fatherNameBn = $rowData[12] ?? null;
+                $motherNameBn = $rowData[13] ?? null;
+                $occupationBn = $rowData[14] ?? null;
+                $addressBn = $rowData[16] ?? null;
+                
+                $voterData = [
+                    'serial_no' => $rowData[0] ?? null,
+                    'upazila' => $rowData[1] ?? null,
+                    'union' => $rowData[2] ?? null,
+                    'ward' => $rowData[3] ?? null,
+                    'area_code' => $rowData[4] ?? null,
+                    'area_name' => $rowData[5] ?? null,
+                    'gender' => $rowData[6] ?? null,
+                    'center_no' => $rowData[7] ?? null,
+                    'center_name' => $rowData[8] ?? null,
+                    'name' => $nameBn,
+                    'name_en' => BengaliTransliterator::transliterate($nameBn),
+                    'voter_id' => $voterId,
+                    'father_name' => $fatherNameBn,
+                    'father_name_en' => BengaliTransliterator::transliterate($fatherNameBn),
+                    'mother_name' => $motherNameBn,
+                    'mother_name_en' => BengaliTransliterator::transliterate($motherNameBn),
+                    'occupation' => $occupationBn,
+                    'profession_en' => BengaliTransliterator::transliterate($occupationBn),
+                    'date_of_birth' => $rowData[15] ?? null,
+                    'address' => $addressBn,
+                    'address_en' => BengaliTransliterator::transliterate($addressBn),
+                    'updated_at' => now(),
+                ];
+
+                if ($mode === 'smart' && $voterId && isset($existingVoters[$voterId])) {
+                    $updateBatch[] = array_merge($voterData, ['id' => $existingVoters[$voterId]]);
+                    $updateCount++;
+                } else {
+                    $voterData['created_at'] = now();
+                    $insertBatch[] = $voterData;
+                    $newCount++;
+                }
+            }
+            
+            // Insert/Update this chunk
+            if (!empty($insertBatch)) {
+                Voter::insert($insertBatch);
+            }
+            if (!empty($updateBatch)) {
+                $this->batchUpdate($updateBatch);
+            }
+            
+            // Free memory
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet, $sheet, $insertBatch, $updateBatch);
+            gc_collect_cycles();
+        }
+
+        DB::commit();
+
+        $message = $mode === 'smart' 
+            ? "এক্সেল আপলোড সফল! নতুন: {$newCount}, আপডেট: {$updateCount}, স্কিপ: {$skipCount}"
+            : "এক্সেল আপলোড সফল! মোট: " . ($newCount + $updateCount) . " রেকর্ড";
+
+        return redirect()->route('admin.upload')->with('success', $message);
     }
 
     /**
