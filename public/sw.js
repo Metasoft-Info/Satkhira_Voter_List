@@ -1,21 +1,18 @@
 // Service Worker for সাতক্ষীরা-২ ভোটার তালিকা PWA
-const CACHE_NAME = 'satkhira-voter-v2';
-const STATIC_CACHE = 'satkhira-static-v2';
-const DATA_CACHE = 'satkhira-data-v2';
+const CACHE_NAME = 'satkhira-voter-v3';
+const STATIC_CACHE = 'satkhira-static-v3';
+const DATA_CACHE = 'satkhira-data-v3';
 
-// Files to cache immediately
+// Files to cache immediately (offline.html is self-contained now)
 const STATIC_FILES = [
     '/',
     '/manifest.json',
-    '/offline.html',
-    'https://cdn.tailwindcss.com',
-    'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
+    '/offline.html'
 ];
 
 // Install Service Worker
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker...');
+    console.log('[SW] Installing Service Worker v3...');
     event.waitUntil(
         caches.open(STATIC_CACHE).then((cache) => {
             console.log('[SW] Caching static files');
@@ -27,12 +24,13 @@ self.addEventListener('install', (event) => {
 
 // Activate Service Worker
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker...');
+    console.log('[SW] Activating Service Worker v3...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== STATIC_CACHE && cacheName !== DATA_CACHE) {
+                    // Delete all old caches (v1, v2, etc.)
+                    if (cacheName !== STATIC_CACHE && cacheName !== DATA_CACHE && cacheName !== CACHE_NAME) {
                         console.log('[SW] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }

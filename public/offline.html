@@ -4,89 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>অফলাইন - সাতক্ষীরা-২ ভোটার তালিকা</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #581c87 0%, #312e81 50%, #1e3a8a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(234, 179, 8, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+        }
+        h1 { color: white; font-size: 24px; margin-bottom: 12px; }
+        .desc { color: #c4b5fd; margin-bottom: 8px; line-height: 1.6; }
+        .status {
+            font-size: 14px;
+            padding: 10px 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #c4b5fd;
+        }
+        .status.success { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+        .status.warning { background: rgba(234, 179, 8, 0.2); color: #fcd34d; }
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        input::placeholder { color: #c4b5fd; }
+        input:focus { outline: none; border-color: #a855f7; background: rgba(255,255,255,0.2); }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: none;
+            color: #c4b5fd;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-secondary:hover { color: white; }
+        .results { margin-top: 20px; text-align: left; }
+        .voter-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .voter-name { color: white; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .voter-id { color: #a855f7; font-size: 14px; font-family: monospace; margin-bottom: 12px; }
+        .voter-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
+        .voter-info div { color: #c4b5fd; }
+        .voter-info span { color: white; }
+        .voter-location { font-size: 12px; color: #a78bfa; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .no-results { color: #fbbf24; padding: 16px; text-align: center; }
+        .loading { color: #c4b5fd; text-align: center; }
+        .count-badge { color: #86efac; margin-bottom: 12px; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center">
-        <div class="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-10 h-10 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/>
-            </svg>
-        </div>
+<body>
+    <div class="container">
+        <div class="icon">📡</div>
         
-        <h1 class="text-2xl font-bold text-white mb-3">ইন্টারনেট সংযোগ নেই</h1>
-        <p class="text-purple-200 mb-2">
-            আপনার ডিভাইসে ইন্টারনেট সংযোগ নেই। অফলাইন সার্চ করতে নিচে নাম বা ভোটার আইডি লিখুন।
-        </p>
-        <p id="data-status" class="text-sm mb-4">ডেটা চেক হচ্ছে...</p>
+        <h1>ইন্টারনেট সংযোগ নেই</h1>
+        <p class="desc">আপনার ডিভাইসে ইন্টারনেট সংযোগ নেই। অফলাইন সার্চ করতে নিচে নাম বা ভোটার আইডি লিখুন।</p>
+        <p id="data-status" class="status">⏳ ডেটা চেক হচ্ছে...</p>
 
-        <div id="offline-search" class="space-y-4">
-            <div class="relative">
-                <input type="text" 
-                       id="search-input"
-                       placeholder="ভোটার আইডি বা নাম লিখুন..."
-                       class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400">
-            </div>
-            <button onclick="searchOffline()" 
-                    class="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-indigo-600 transition">
-                🔍 অফলাইন সার্চ
-            </button>
+        <div id="offline-search">
+            <input type="text" id="search-input" placeholder="ভোটার আইডি বা নাম লিখুন...">
+            <button class="btn-primary" onclick="searchOffline()">🔍 অফলাইন সার্চ</button>
         </div>
 
-        <div id="results" class="mt-6 text-left space-y-3"></div>
+        <div id="results" class="results"></div>
 
-        <button onclick="location.reload()" 
-                class="mt-6 text-purple-300 hover:text-white transition flex items-center justify-center w-full">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-            পুনরায় চেষ্টা করুন
-        </button>
+        <button class="btn-secondary" onclick="location.reload()">🔄 পুনরায় চেষ্টা করুন</button>
     </div>
 
     <script>
-        // IndexedDB for offline storage - MUST match home.blade.php settings
         const DB_NAME = 'VoterListDB';
         const DB_VERSION = 1;
         const STORE_NAME = 'voters';
         let db;
 
-        // Open IndexedDB
         function openDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
                 request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
+                request.onsuccess = () => { db = request.result; resolve(db); };
                 request.onupgradeneeded = (event) => {
                     const database = event.target.result;
                     if (!database.objectStoreNames.contains(STORE_NAME)) {
                         const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
                         store.createIndex('voter_id', 'voter_id', { unique: true });
                         store.createIndex('name', 'name', { unique: false });
-                        store.createIndex('father_name', 'father_name', { unique: false });
-                        store.createIndex('mother_name', 'mother_name', { unique: false });
-                        store.createIndex('upazila', 'upazila', { unique: false });
-                        store.createIndex('union', 'union', { unique: false });
-                        store.createIndex('serial_no', 'serial_no', { unique: false });
                     }
                 };
             });
         }
 
-        // Search in IndexedDB
         async function searchOffline() {
             const query = document.getElementById('search-input').value.trim().toLowerCase();
             if (!query) return;
 
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<p class="text-purple-200">🔍 খুঁজছি...</p>';
+            resultsDiv.innerHTML = '<p class="loading">🔍 খুঁজছি...</p>';
 
             try {
                 await openDB();
@@ -99,18 +159,13 @@
                         const cursor = event.target.result;
                         if (cursor) {
                             const voter = cursor.value;
-                            const voterName = (voter.name || '').toLowerCase();
-                            const voterId = (voter.voter_id || '').toLowerCase();
-                            const fatherName = (voter.father_name || '').toLowerCase();
-                            const motherName = (voter.mother_name || '').toLowerCase();
+                            const searchFields = [voter.voter_id, voter.name, voter.father_name, voter.mother_name]
+                                .filter(Boolean).join(' ').toLowerCase();
                             
-                            if (voterId.includes(query) || 
-                                voterName.includes(query) ||
-                                fatherName.includes(query) ||
-                                motherName.includes(query)) {
+                            if (searchFields.includes(query)) {
                                 results.push(voter);
                             }
-                            if (results.length < 50) {
+                            if (results.length < 20) {
                                 cursor.continue();
                             } else {
                                 displayResults(results);
@@ -123,32 +178,35 @@
                     };
                 });
             } catch (error) {
-                resultsDiv.innerHTML = `<p class="text-red-300">❌ ত্রুটি: ${error.message}</p>`;
+                resultsDiv.innerHTML = '<p class="no-results">❌ সার্চ করতে সমস্যা হয়েছে</p>';
             }
         }
 
         function displayResults(voters) {
             const resultsDiv = document.getElementById('results');
             if (voters.length === 0) {
-                resultsDiv.innerHTML = '<p class="text-yellow-300">⚠️ কোন ভোটার পাওয়া যায়নি। প্রথমে অনলাইনে গিয়ে ওয়েবসাইট খুলুন যাতে ডেটা ক্যাশে হয়।</p>';
+                resultsDiv.innerHTML = '<p class="no-results">⚠️ কোন ভোটার পাওয়া যায়নি</p>';
                 return;
             }
 
             resultsDiv.innerHTML = `
-                <p class="text-green-300 mb-3">✅ ${voters.length} জন ভোটার পাওয়া গেছে</p>
+                <p class="count-badge">✅ ${voters.length} জন ভোটার পাওয়া গেছে</p>
                 ${voters.map(v => `
-                    <div class="bg-white/10 rounded-lg p-3 border border-white/20">
-                        <p class="font-semibold text-white">${v.name || 'N/A'}</p>
-                        <p class="text-sm text-purple-200">ভোটার নং: ${v.voter_id || 'N/A'}</p>
-                        <p class="text-sm text-purple-300">পিতা: ${v.father_name || 'N/A'}</p>
-                        <p class="text-sm text-purple-300">মাতা: ${v.mother_name || 'N/A'}</p>
-                        <p class="text-xs text-purple-400 mt-1">${v.union || ''}, ${v.upazila || ''}</p>
+                    <div class="voter-card">
+                        <div class="voter-name">${v.name || 'N/A'}</div>
+                        <div class="voter-id">🆔 ${v.voter_id || 'N/A'}</div>
+                        <div class="voter-info">
+                            <div>পিতা: <span>${v.father_name || 'N/A'}</span></div>
+                            <div>মাতা: <span>${v.mother_name || 'N/A'}</span></div>
+                            <div>কেন্দ্র: <span>${v.center_name || 'N/A'}</span></div>
+                            <div>সিরিয়াল: <span>${v.serial_no || 'N/A'}</span></div>
+                        </div>
+                        ${v.union || v.upazila ? `<div class="voter-location">📍 ${v.union || ''} ${v.upazila ? ', ' + v.upazila : ''}</div>` : ''}
                     </div>
                 `).join('')}
             `;
         }
 
-        // Check data count on load
         async function checkDataAvailability() {
             try {
                 await openDB();
@@ -158,25 +216,21 @@
                 
                 countRequest.onsuccess = () => {
                     const count = countRequest.result;
+                    const statusEl = document.getElementById('data-status');
                     if (count > 0) {
-                        document.getElementById('data-status').innerHTML = 
-                            `<span class="text-green-300">✅ ${count.toLocaleString('bn-BD')} জন ভোটারের ডেটা সংরক্ষিত আছে</span>`;
+                        statusEl.textContent = `✅ ${count.toLocaleString('bn-BD')} জন ভোটারের ডেটা সংরক্ষিত আছে`;
+                        statusEl.className = 'status success';
                     } else {
-                        document.getElementById('data-status').innerHTML = 
-                            `<span class="text-yellow-300">⚠️ কোন ডেটা সংরক্ষিত নেই। অনলাইনে গিয়ে প্রথমে ওয়েবসাইট খুলুন।</span>`;
+                        statusEl.textContent = '⚠️ কোন ডেটা নেই। অনলাইনে গিয়ে প্রথমে সাইট খুলুন।';
+                        statusEl.className = 'status warning';
                     }
                 };
             } catch (error) {
-                console.error('Database check error:', error);
+                document.getElementById('data-status').textContent = '❌ ডেটাবেস চেক করতে সমস্যা';
             }
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            checkDataAvailability();
-        });
-        
-        // Allow Enter key to search
+        document.addEventListener('DOMContentLoaded', checkDataAvailability);
         document.getElementById('search-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchOffline();
         });
