@@ -18,7 +18,7 @@ class DashboardController extends Controller
     {
         $totalVoters = Voter::count();
         $maleVoters = Voter::where('gender', 'পুরুষ')->count();
-        $femaleVoters = Voter::where('gender', 'মহলিা')->count();
+        $femaleVoters = Voter::where('gender', 'মহিলা')->count();
         $totalCenters = Voter::distinct('center_name')->count('center_name');
 
         return view('admin.dashboard', compact('totalVoters', 'maleVoters', 'femaleVoters', 'totalCenters'));

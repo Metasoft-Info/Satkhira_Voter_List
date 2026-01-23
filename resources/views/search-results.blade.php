@@ -180,8 +180,8 @@
                     @if(!empty($currentFilters['area_code']))<input type="hidden" name="area_code" value="{{ $currentFilters['area_code'] }}">@endif
                     @if(!empty($currentFilters['gender']))<input type="hidden" name="gender" value="{{ $currentFilters['gender'] }}">@endif
                     
-                    <!-- Center Filter -->
-                    @if(count($centers) >= 1)
+                    <!-- Center Filter - Hidden temporarily -->
+                    {{-- @if(count($centers) >= 1)
                     <div class="relative">
                         <select name="center" onchange="this.form.submit()"
                                 class="appearance-none bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:border-purple-500 cursor-pointer">
@@ -192,7 +192,7 @@
                         </select>
                         <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-purple-500 text-xs pointer-events-none"></i>
                     </div>
-                    @endif
+                    @endif --}}
                     
                     <!-- Birth Year Filter -->
                     @if(count($birthYears) >= 1)
@@ -249,7 +249,7 @@
                             <!-- Serial No -->
                             <div class="flex items-center text-sm border-b border-gray-100 pb-2">
                                 <span class="text-gray-500 w-24">সিরিয়াল নং:</span>
-                                <span class="font-semibold text-purple-600">@bengali($voter->serial_no)</span>
+                                <span class="font-bold text-gray-900 text-lg">@bengali($voter->serial_no)</span>
                             </div>
                             
                             <!-- Name -->
@@ -292,7 +292,7 @@
                             <!-- Address -->
                             <div class="flex items-start text-sm pt-2 border-t border-gray-100">
                                 <span class="text-gray-500 w-24 flex-shrink-0">ঠিকানা:</span>
-                                <span class="text-gray-700">{{ $voter->area_name ?? '' }}, {{ $voter->union }}, {{ $voter->upazila }}, ওয়ার্ড-@bengali($voter->ward), এলাকা কোড-@bengali($voter->area_code)</span>
+                                <span class="text-gray-700">{{ $voter->area_name ?? '' }}(@bengali($voter->area_code)), ওয়ার্ড-@bengali($voter->ward), {{ $voter->union }}, {{ $voter->upazila }}, সাতক্ষীরা।</span>
                             </div>
                         </div>
                         
@@ -415,7 +415,7 @@
 👩 *মাতা:* ${data.mother}
 💼 *পেশা:* ${data.occupation}
 📅 *জন্ম তারিখ:* ${data.dob}
-📍 *ঠিকানা:* ${data.area_name}, ${data.union}, ${data.upazila}, ওয়ার্ড-${data.ward}, এলাকা কোড-${data.area_code}
+📍 *ঠিকানা:* ${data.area_name}(${data.area_code}), ওয়ার্ড-${data.ward}, ${data.union}, ${data.upazila}, সাতক্ষীরা।
 ━━━━━━━━━━━━━━━
 🌐 সাতক্ষীরা-২ ভোটার তালিকা`;
         }

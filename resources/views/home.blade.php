@@ -488,23 +488,23 @@
                 getSearchLabel() {
                     const labels = {
                         'voter_id': 'ভোটার আইডি নম্বর লিখুন',
-                        'name': 'নাম লিখুন',
-                        'father_name': 'পিতার নাম লিখুন',
-                        'mother_name': 'মাতার নাম লিখুন',
+                        'name': 'নাম লিখুন (বাংলা/English)',
+                        'father_name': 'পিতার নাম লিখুন (বাংলা/English)',
+                        'mother_name': 'মাতার নাম লিখুন (বাংলা/English)',
                         'serial_no': 'সিরিয়াল নম্বর লিখুন',
-                        'dob': 'জন্ম তারিখ লিখুন (পুরো অথবা শুধু সাল)'
+                        'dob': 'জন্ম তারিখ লিখুন (দিন/মাস/বছর)'
                     };
                     return labels[this.searchType] || 'অনুসন্ধান করুন';
                 },
 
                 getSearchPlaceholder() {
                     const placeholders = {
-                        'voter_id': 'যেমন: ১২৩৪৫৬৭৮৯০১২৩',
-                        'name': 'যেমন: মোঃ করিম উদ্দিন',
-                        'father_name': 'যেমন: মোঃ আব্দুল করিম',
-                        'mother_name': 'যেমন: মোসাঃ ফাতেমা খাতুন',
-                        'serial_no': 'যেমন: ০০১',
-                        'dob': 'যেমন: ২০/১১/১৯৭৮ অথবা শুধু ১৯৭৮'
+                        'voter_id': 'যেমন: ১২৩৪৫৬৭৮৯০১২৩ or 1234567890123',
+                        'name': 'যেমন: মোঃ করিম / Md. Karim',
+                        'father_name': 'যেমন: আব্দুল করিম / Abdul Karim',
+                        'mother_name': 'যেমন: ফাতেমা খাতুন / Fatema Khatun',
+                        'serial_no': 'যেমন: ০০১ or 001',
+                        'dob': 'যেমন: ২০/১১/১৯৭৮ or 20/11/1978'
                     };
                     return placeholders[this.searchType] || 'এখানে লিখুন...';
                 },
