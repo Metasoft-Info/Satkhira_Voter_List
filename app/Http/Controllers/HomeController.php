@@ -99,6 +99,7 @@ class HomeController extends Controller
         $areaCode = $request->input('area_code');
         $center = $request->input('center');
         $gender = $request->input('gender');
+        $birthYear = $request->input('birth_year'); // New filter
         
         $voterQuery = Voter::query();
         
@@ -163,6 +164,14 @@ class HomeController extends Controller
                           ->orWhere('serial_no', 'LIKE', "%{$query}%");
                     });
                     break;
+                case 'dob':
+                    // Search in date_of_birth field
+                    $voterQuery->where(function($q) use ($query, $queryBengali, $queryEnglish) {
+                        $q->where('date_of_birth', 'LIKE', "%{$queryBengali}%")
+                          ->orWhere('date_of_birth', 'LIKE', "%{$queryEnglish}%")
+                          ->orWhere('date_of_birth', 'LIKE', "%{$query}%");
+                    });
+                    break;
             }
         }
         
@@ -185,33 +194,44 @@ class HomeController extends Controller
         if ($gender) {
             $voterQuery->where('gender', $gender);
         }
+        // Birth year filter - match last 4 characters of date_of_birth
+        if ($birthYear) {
+            $voterQuery->whereRaw("RIGHT(date_of_birth, 4) = ?", [$birthYear]);
+        }
         
         // Clone query for getting filters from results
         $baseQuery = clone $voterQuery;
         
         $voters = $voterQuery->orderBy('serial_no')->paginate(50)->withQueryString();
         
-        // Get unique centers from current filter results
+        // Get unique centers - fresh query with same filters
         $concat = $this->concatFields("center_no", "' - '", "center_name");
-        $centers = $baseQuery->select(DB::raw("{$concat} as display_name"), 'center_name', 'center_no')
+        $centers = Voter::query()
+            ->when($upazila, fn($q) => $q->where('upazila', $upazila))
+            ->when($union, fn($q) => $q->where('union', $union))
+            ->when($ward, fn($q) => $q->where('ward', $ward))
+            ->when($areaCode, fn($q) => $q->where('area_code', $areaCode))
+            ->when($gender, fn($q) => $q->where('gender', $gender))
+            ->select(DB::raw("{$concat} as display_name"), 'center_name', 'center_no')
             ->groupBy('center_no', 'center_name')
             ->orderBy('center_no')
             ->pluck('display_name', 'center_name')
             ->toArray();
         
-        // Get unique birth years from current filter results
+        // Get unique birth years - extract 4-digit year (Bengali or English)
         $birthYears = Voter::query()
             ->when($upazila, fn($q) => $q->where('upazila', $upazila))
             ->when($union, fn($q) => $q->where('union', $union))
             ->when($ward, fn($q) => $q->where('ward', $ward))
             ->when($areaCode, fn($q) => $q->where('area_code', $areaCode))
             ->when($gender, fn($q) => $q->where('gender', $gender))
-            ->selectRaw("DISTINCT SUBSTRING(date_of_birth, -4) as birth_year")
+            ->selectRaw("DISTINCT RIGHT(date_of_birth, 4) as birth_year")
             ->whereNotNull('date_of_birth')
             ->where('date_of_birth', '!=', '')
+            ->whereRaw("LENGTH(date_of_birth) >= 4")
             ->orderBy('birth_year')
             ->pluck('birth_year')
-            ->filter()
+            ->filter(fn($y) => preg_match('/^[০-৯0-9]{4}$/u', $y)) // Accept Bengali or English 4 digits (u = unicode)
             ->values()
             ->toArray();
         
@@ -226,6 +246,7 @@ class HomeController extends Controller
             'area_code' => $areaCode,
             'center' => $center,
             'gender' => $gender,
+            'birth_year' => $birthYear,
         ];
         
         return view('search-results', compact(

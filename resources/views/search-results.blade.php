@@ -15,9 +15,6 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -85,7 +82,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-8" x-data="searchResults()">
+    <main class="max-w-6xl mx-auto px-4 py-8">
         <!-- Quick Search Bar with Preserved Filters -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <form action="{{ route('search') }}" method="GET" class="space-y-4">
@@ -168,23 +165,29 @@
                         @if($query)
                             "{{ $query }}" এর জন্য 
                         @endif
-                        <span class="font-semibold text-purple-600">@bengali($voters->total() ?? 0)</span> টি ফলাফল 
-                        <span x-show="filteredCount !== totalCount" class="text-sm">
-                            (<span class="text-green-600 font-semibold" x-text="toBengali(filteredCount)"></span> টি দেখানো হচ্ছে)
-                        </span>
+                        <span class="font-semibold text-purple-600">@bengali($voters->total() ?? 0)</span> টি ফলাফল পাওয়া গেছে
                     </p>
                 </div>
                 
-                <!-- Result Page Filters -->
-                <div class="flex flex-wrap gap-3">
+                <!-- Result Page Filters - Server Side -->
+                <form action="{{ route('search') }}" method="GET" class="flex flex-wrap gap-3 items-center">
+                    <!-- Preserve existing filters -->
+                    @if($query)<input type="hidden" name="query" value="{{ $query }}">@endif
+                    @if($searchType)<input type="hidden" name="search_type" value="{{ $searchType }}">@endif
+                    @if(!empty($currentFilters['upazila']))<input type="hidden" name="upazila" value="{{ $currentFilters['upazila'] }}">@endif
+                    @if(!empty($currentFilters['union']))<input type="hidden" name="union" value="{{ $currentFilters['union'] }}">@endif
+                    @if(!empty($currentFilters['ward']))<input type="hidden" name="ward" value="{{ $currentFilters['ward'] }}">@endif
+                    @if(!empty($currentFilters['area_code']))<input type="hidden" name="area_code" value="{{ $currentFilters['area_code'] }}">@endif
+                    @if(!empty($currentFilters['gender']))<input type="hidden" name="gender" value="{{ $currentFilters['gender'] }}">@endif
+                    
                     <!-- Center Filter -->
-                    @if(count($centers) > 1)
+                    @if(count($centers) >= 1)
                     <div class="relative">
-                        <select x-model="selectedCenter" @change="applyFilters()"
+                        <select name="center" onchange="this.form.submit()"
                                 class="appearance-none bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:border-purple-500 cursor-pointer">
-                            <option value="">সকল কেন্দ্র</option>
+                            <option value="">সকল কেন্দ্র ({{ count($centers) }})</option>
                             @foreach($centers as $centerName => $displayName)
-                                <option value="{{ $centerName }}">{{ $displayName }}</option>
+                                <option value="{{ $centerName }}" {{ ($currentFilters['center'] ?? '') == $centerName ? 'selected' : '' }}>{{ $displayName }}</option>
                             @endforeach
                         </select>
                         <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-purple-500 text-xs pointer-events-none"></i>
@@ -192,27 +195,35 @@
                     @endif
                     
                     <!-- Birth Year Filter -->
-                    @if(count($birthYears) > 1)
+                    @if(count($birthYears) >= 1)
                     <div class="relative">
-                        <select x-model="selectedYear" @change="applyFilters()"
+                        <select name="birth_year" onchange="this.form.submit()"
                                 class="appearance-none bg-green-50 border border-green-200 text-green-700 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:border-green-500 cursor-pointer">
-                            <option value="">সকল জন্ম সাল</option>
+                            <option value="">সকল জন্ম সাল ({{ count($birthYears) }})</option>
                             @foreach($birthYears as $year)
-                                <option value="{{ $year }}">{{ $year }}</option>
+                                <option value="{{ $year }}" {{ ($currentFilters['birth_year'] ?? '') == $year ? 'selected' : '' }}>{{ $year }}</option>
                             @endforeach
                         </select>
                         <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-xs pointer-events-none"></i>
                     </div>
                     @endif
                     
-                    <!-- Clear Filters -->
-                    <button x-show="selectedCenter || selectedYear" 
-                            @click="clearFilters()"
-                            class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm hover:bg-red-200 transition">
+                    <!-- Clear Additional Filters -->
+                    @if(!empty($currentFilters['center']) || !empty($currentFilters['birth_year']))
+                    <a href="{{ route('search', array_filter([
+                        'query' => $query,
+                        'search_type' => $searchType,
+                        'upazila' => $currentFilters['upazila'] ?? null,
+                        'union' => $currentFilters['union'] ?? null,
+                        'ward' => $currentFilters['ward'] ?? null,
+                        'area_code' => $currentFilters['area_code'] ?? null,
+                        'gender' => $currentFilters['gender'] ?? null,
+                    ])) }}" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm hover:bg-red-200 transition">
                         <i class="fas fa-times mr-1"></i>
                         ফিল্টার মুছুন
-                    </button>
-                </div>
+                    </a>
+                    @endif
+                </form>
             </div>
         </div>
 
@@ -221,48 +232,67 @@
             <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
                 @foreach($voters as $index => $voter)
                     <div id="voter-card-{{ $voter->id }}" 
-                         class="voter-card bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden"
-                         data-center="{{ $voter->center_name }}"
-                         data-birth-year="{{ substr($voter->date_of_birth ?? '', -4) }}"
-                         x-show="isVisible('{{ $voter->center_name }}', '{{ substr($voter->date_of_birth ?? '', -4) }}')"
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 transform scale-95"
-                         x-transition:enter-end="opacity-100 transform scale-100">
-                        <!-- Card Header -->
-                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 flex justify-between items-center">
-                            <div class="flex items-center gap-3 text-white">
-                                <span class="bg-white/20 px-2 py-0.5 rounded text-xs font-medium">সিরিয়াল: @bengali($voter->serial_no)</span>
-                                <span class="text-sm">@bengali($voter->center_no) - {{ $voter->center_name }}</span>
+                         class="voter-card bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden">
+                        <!-- Card Header - Center Info -->
+                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3">
+                            <div class="text-white">
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="font-medium">কেন্দ্র নং:</span>
+                                    <span class="bg-white/20 px-2 py-0.5 rounded">@bengali($voter->center_no)</span>
+                                </div>
+                                <div class="text-lg font-semibold mt-1">{{ $voter->center_name }}</div>
                             </div>
-                            <span class="text-white/80 text-xs">{{ $voter->gender == 'পুরুষ' ? '👨' : ($voter->gender == 'মহিলা' ? '👩' : '🧑') }}</span>
                         </div>
                         
-                        <!-- Card Body -->
-                        <div class="p-4">
-                            <!-- Name & Voter ID - Main Info -->
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3 pb-3 border-b border-gray-100">
-                                <h3 class="text-lg font-bold text-gray-900">{{ $voter->name }}</h3>
-                                <span class="font-mono text-sm font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded">@bengali($voter->voter_id)</span>
+                        <!-- Card Body - Voter Info -->
+                        <div class="p-4 space-y-2">
+                            <!-- Serial No -->
+                            <div class="flex items-center text-sm border-b border-gray-100 pb-2">
+                                <span class="text-gray-500 w-24">সিরিয়াল নং:</span>
+                                <span class="font-semibold text-purple-600">@bengali($voter->serial_no)</span>
                             </div>
                             
-                            <!-- Info Grid -->
-                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 text-sm">
-                                <div><span class="text-gray-400">লিঙ্গ:</span> <span class="text-gray-700 font-medium">{{ $voter->gender }}</span></div>
-                                <div><span class="text-gray-400">জন্ম:</span> <span class="text-gray-700">@bengali($voter->date_of_birth ?? 'N/A')</span></div>
-                                <div><span class="text-gray-400">পেশা:</span> <span class="text-gray-700">{{ $voter->occupation ?? 'N/A' }}</span></div>
-                                <div><span class="text-gray-400">ওয়ার্ড:</span> <span class="text-gray-700">@bengali($voter->ward)</span></div>
+                            <!-- Name -->
+                            <div class="flex items-center text-sm">
+                                <span class="text-gray-500 w-24">নাম:</span>
+                                <span class="font-bold text-gray-900 text-lg">{{ $voter->name }}</span>
+                                <span class="ml-2">{{ $voter->gender == 'পুরুষ' ? '👨' : ($voter->gender == 'মহিলা' ? '👩' : '🧑') }}</span>
                             </div>
                             
-                            <!-- Parents -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm mt-2 pt-2 border-t border-gray-50">
-                                <div><span class="text-gray-400">পিতা:</span> <span class="text-gray-700">{{ $voter->father_name ?? 'N/A' }}</span></div>
-                                <div><span class="text-gray-400">মাতা:</span> <span class="text-gray-700">{{ $voter->mother_name ?? 'N/A' }}</span></div>
+                            <!-- Voter ID -->
+                            <div class="flex items-center text-sm">
+                                <span class="text-gray-500 w-24">ভোটার নং:</span>
+                                <span class="font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">@bengali($voter->voter_id)</span>
+                            </div>
+                            
+                            <!-- Father -->
+                            <div class="flex items-center text-sm">
+                                <span class="text-gray-500 w-24">পিতা:</span>
+                                <span class="text-gray-700">{{ $voter->father_name ?? 'N/A' }}</span>
+                            </div>
+                            
+                            <!-- Mother -->
+                            <div class="flex items-center text-sm">
+                                <span class="text-gray-500 w-24">মাতা:</span>
+                                <span class="text-gray-700">{{ $voter->mother_name ?? 'N/A' }}</span>
+                            </div>
+                            
+                            <!-- Occupation -->
+                            <div class="flex items-center text-sm">
+                                <span class="text-gray-500 w-24">পেশা:</span>
+                                <span class="text-gray-700">{{ $voter->occupation ?? 'N/A' }}</span>
+                            </div>
+                            
+                            <!-- Date of Birth -->
+                            <div class="flex items-center text-sm">
+                                <span class="text-gray-500 w-24">জন্ম তারিখ:</span>
+                                <span class="text-gray-700">@bengali($voter->date_of_birth ?? 'N/A')</span>
                             </div>
                             
                             <!-- Address -->
-                            <div class="text-sm mt-2 pt-2 border-t border-gray-50">
-                                <span class="text-gray-400">ঠিকানা:</span> 
-                                <span class="text-gray-600">{{ $voter->upazila }}, {{ $voter->union }}, {{ $voter->area_name ?? '' }}, ওয়ার্ড: @bengali($voter->ward), এলাকা কোড: @bengali($voter->area_code)</span>
+                            <div class="flex items-start text-sm pt-2 border-t border-gray-100">
+                                <span class="text-gray-500 w-24 flex-shrink-0">ঠিকানা:</span>
+                                <span class="text-gray-700">{{ $voter->area_name ?? '' }}, {{ $voter->union }}, {{ $voter->upazila }}, ওয়ার্ড-@bengali($voter->ward), এলাকা কোড-@bengali($voter->area_code)</span>
                             </div>
                         </div>
                         
@@ -294,7 +324,8 @@
                                 "occupation": "{{ $voter->occupation ?? 'N/A' }}",
                                 "father": "{{ $voter->father_name ?? 'N/A' }}",
                                 "mother": "{{ $voter->mother_name ?? 'N/A' }}",
-                                "center": "{{ $voter->center_no }} - {{ $voter->center_name }}",
+                                "center_no": "{{ $voter->center_no }}",
+                                "center_name": "{{ $voter->center_name }}",
                                 "upazila": "{{ $voter->upazila }}",
                                 "union": "{{ $voter->union }}",
                                 "ward": "{{ $voter->ward }}",
@@ -342,57 +373,6 @@
         </div>
     </footer>
 
-    <!-- Alpine.js Search Results Component -->
-    <script>
-        function searchResults() {
-            return {
-                selectedCenter: '',
-                selectedYear: '',
-                totalCount: {{ $voters->count() }},
-                filteredCount: {{ $voters->count() }},
-                
-                init() {
-                    this.updateFilteredCount();
-                },
-                
-                isVisible(center, birthYear) {
-                    let centerMatch = !this.selectedCenter || center === this.selectedCenter;
-                    let yearMatch = !this.selectedYear || birthYear === this.selectedYear;
-                    return centerMatch && yearMatch;
-                },
-                
-                applyFilters() {
-                    this.$nextTick(() => {
-                        this.updateFilteredCount();
-                    });
-                },
-                
-                updateFilteredCount() {
-                    let visible = 0;
-                    document.querySelectorAll('.voter-card').forEach(card => {
-                        const center = card.dataset.center;
-                        const birthYear = card.dataset.birthYear;
-                        if (this.isVisible(center, birthYear)) {
-                            visible++;
-                        }
-                    });
-                    this.filteredCount = visible;
-                },
-                
-                clearFilters() {
-                    this.selectedCenter = '';
-                    this.selectedYear = '';
-                    this.updateFilteredCount();
-                },
-                
-                toBengali(num) {
-                    const bengali = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-                    return String(num).replace(/[0-9]/g, d => bengali[d]);
-                }
-            }
-        }
-    </script>
-
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
         <span id="toast-message"></span>
@@ -426,16 +406,16 @@
         function formatVoterText(data) {
             return `📋 *ভোটার তথ্য*
 ━━━━━━━━━━━━━━━
-🏢 *কেন্দ্র:* ${data.center}
-📝 *সিরিয়াল:* ${data.serial_no}
+🏢 *কেন্দ্র নং:* ${data.center_no}
+🏛️ *কেন্দ্র:* ${data.center_name}
+📝 *সিরিয়াল নং:* ${data.serial_no}
 👤 *নাম:* ${data.name}
 🆔 *ভোটার নং:* ${data.voter_id}
-⚧ *লিঙ্গ:* ${data.gender}
-📅 *জন্ম তারিখ:* ${data.dob}
+👨 *পিতা:* ${data.father}
+👩 *মাতা:* ${data.mother}
 💼 *পেশা:* ${data.occupation}
-👨 *পিতার নাম:* ${data.father}
-👩 *মাতার নাম:* ${data.mother}
-📍 *ঠিকানা:* ${data.upazila}, ${data.union}, ${data.area_name}, ওয়ার্ড: ${data.ward}, এলাকা কোড: ${data.area_code}
+📅 *জন্ম তারিখ:* ${data.dob}
+📍 *ঠিকানা:* ${data.area_name}, ${data.union}, ${data.upazila}, ওয়ার্ড-${data.ward}, এলাকা কোড-${data.area_code}
 ━━━━━━━━━━━━━━━
 🌐 সাতক্ষীরা-২ ভোটার তালিকা`;
         }

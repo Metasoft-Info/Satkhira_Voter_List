@@ -195,22 +195,68 @@
             <!-- Search Form -->
             <form action="{{ route('search') }}" method="GET" class="space-y-6">
                 
-                <!-- Search Method Selection -->
+                <!-- Search Method Selection - Card Style -->
                 <div class="mb-6">
-                    <label class="block text-gray-700 font-medium mb-2">
+                    <label class="block text-gray-700 font-semibold mb-3 text-center">
                         <i class="fas fa-hand-pointer mr-2 text-purple-600"></i>
                         খোঁজার মাধ্যম নির্বাচন করুন
                     </label>
-                    <select name="search_type" 
-                            x-model="searchType"
-                            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-purple-500 focus:outline-none transition">
-                        <option value="">-- নির্বাচন করুন --</option>
-                        <option value="voter_id">ভোটার আইডি নম্বর</option>
-                        <option value="name">নাম</option>
-                        <option value="father_name">পিতার নাম</option>
-                        <option value="mother_name">মাতার নাম</option>
-                        <option value="serial_no">সিরিয়াল নম্বর</option>
-                    </select>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                        <!-- 1. Name -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="name" x-model="searchType" class="sr-only peer">
+                            <div class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-purple-400 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-2 peer-checked:bg-purple-600 text-purple-600 peer-checked:text-white">
+                                    <i class="fas fa-user text-xl"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">১। নাম</span>
+                            </div>
+                        </label>
+                        
+                        <!-- 2. Voter ID -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="voter_id" x-model="searchType" class="sr-only peer">
+                            <div class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2 text-blue-600">
+                                    <i class="fas fa-id-card text-xl"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">২। ভোটার নং</span>
+                            </div>
+                        </label>
+                        
+                        <!-- 3. Date of Birth -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="dob" x-model="searchType" class="sr-only peer">
+                            <div class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-green-400 peer-checked:border-green-600 peer-checked:bg-green-50 transition-all">
+                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2 text-green-600">
+                                    <i class="fas fa-calendar-alt text-xl"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">৩। জন্ম তারিখ</span>
+                            </div>
+                        </label>
+                        
+                        <!-- 4. Father's Name -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="father_name" x-model="searchType" class="sr-only peer">
+                            <div class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 peer-checked:border-orange-600 peer-checked:bg-orange-50 transition-all">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-2 text-orange-600">
+                                    <i class="fas fa-male text-xl"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">৪। পিতার নাম</span>
+                            </div>
+                        </label>
+                        
+                        <!-- 5. Mother's Name -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="mother_name" x-model="searchType" class="sr-only peer">
+                            <div class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-pink-400 peer-checked:border-pink-600 peer-checked:bg-pink-50 transition-all">
+                                <div class="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center mb-2 text-pink-600">
+                                    <i class="fas fa-female text-xl"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">৫। মাতার নাম</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Search Input (shows when search type selected) -->
@@ -445,18 +491,20 @@
                         'name': 'নাম লিখুন',
                         'father_name': 'পিতার নাম লিখুন',
                         'mother_name': 'মাতার নাম লিখুন',
-                        'serial_no': 'সিরিয়াল নম্বর লিখুন'
+                        'serial_no': 'সিরিয়াল নম্বর লিখুন',
+                        'dob': 'জন্ম তারিখ লিখুন (পুরো অথবা শুধু সাল)'
                     };
                     return labels[this.searchType] || 'অনুসন্ধান করুন';
                 },
 
                 getSearchPlaceholder() {
                     const placeholders = {
-                        'voter_id': 'যেমন: 1234567890123',
+                        'voter_id': 'যেমন: ১২৩৪৫৬৭৮৯০১২৩',
                         'name': 'যেমন: মোঃ করিম উদ্দিন',
                         'father_name': 'যেমন: মোঃ আব্দুল করিম',
                         'mother_name': 'যেমন: মোসাঃ ফাতেমা খাতুন',
-                        'serial_no': 'যেমন: 001'
+                        'serial_no': 'যেমন: ০০১',
+                        'dob': 'যেমন: ২০/১১/১৯৭৮ অথবা শুধু ১৯৭৮'
                     };
                     return placeholders[this.searchType] || 'এখানে লিখুন...';
                 },
