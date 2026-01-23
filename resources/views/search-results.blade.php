@@ -15,6 +15,9 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -82,41 +85,80 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-8">
-        <!-- Quick Search Bar -->
+    <main class="max-w-6xl mx-auto px-4 py-8" x-data="searchResults()">
+        <!-- Quick Search Bar with Preserved Filters -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <form action="{{ route('search') }}" method="GET" class="flex flex-col md:flex-row gap-4">
-                <!-- Pass search type if available, auto-detect otherwise -->
+            <form action="{{ route('search') }}" method="GET" class="space-y-4">
+                <!-- Keep current filters as hidden fields -->
+                @if(!empty($currentFilters['upazila']))
+                    <input type="hidden" name="upazila" value="{{ $currentFilters['upazila'] }}">
+                @endif
+                @if(!empty($currentFilters['union']))
+                    <input type="hidden" name="union" value="{{ $currentFilters['union'] }}">
+                @endif
+                @if(!empty($currentFilters['ward']))
+                    <input type="hidden" name="ward" value="{{ $currentFilters['ward'] }}">
+                @endif
+                @if(!empty($currentFilters['area_code']))
+                    <input type="hidden" name="area_code" value="{{ $currentFilters['area_code'] }}">
+                @endif
+                @if(!empty($currentFilters['gender']))
+                    <input type="hidden" name="gender" value="{{ $currentFilters['gender'] }}">
+                @endif
                 @if($searchType)
                     <input type="hidden" name="search_type" value="{{ $searchType }}">
                 @endif
-                <div class="flex-grow">
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400"></i>
+                
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" 
+                                   name="query" 
+                                   value="{{ $query ?? '' }}"
+                                   placeholder="নাম, ভোটার আইডি, সিরিয়াল নম্বর দিয়ে খুঁজুন..."
+                                   class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition text-lg">
                         </div>
-                        <input type="text" 
-                               name="query" 
-                               value="{{ $query ?? '' }}"
-                               placeholder="নাম, ভোটার আইডি (English/বাংলা), সিরিয়াল নম্বর দিয়ে খুঁজুন..."
-                               class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition text-lg">
                     </div>
-                    <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle mr-1"></i>English বা বাংলা যেকোনো ভাষায় নম্বর দিয়ে সার্চ করতে পারবেন</p>
+                    <button type="submit" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 transition flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i>
+                        অনুসন্ধান
+                    </button>
+                    <a href="{{ route('home') }}" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium hover:bg-gray-300 transition flex items-center justify-center">
+                        <i class="fas fa-redo mr-2"></i>
+                        নতুন সার্চ
+                    </a>
                 </div>
-                <button type="submit" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 transition flex items-center justify-center">
-                    <i class="fas fa-search mr-2"></i>
-                    অনুসন্ধান
-                </button>
-                <a href="{{ route('home') }}" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium hover:bg-gray-300 transition flex items-center justify-center">
-                    <i class="fas fa-filter mr-2"></i>
-                    ফিল্টার
-                </a>
+                
+                <!-- Current Filters Display -->
+                @if(!empty($currentFilters['upazila']) || !empty($currentFilters['union']) || !empty($currentFilters['ward']) || !empty($currentFilters['area_code']) || !empty($currentFilters['gender']))
+                <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+                    <span class="text-sm text-gray-500"><i class="fas fa-filter mr-1"></i>সক্রিয় ফিল্টার:</span>
+                    @if(!empty($currentFilters['upazila']))
+                        <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">{{ $currentFilters['upazila'] }}</span>
+                    @endif
+                    @if(!empty($currentFilters['union']))
+                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">{{ $currentFilters['union'] }}</span>
+                    @endif
+                    @if(!empty($currentFilters['ward']))
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">ওয়ার্ড: {{ $currentFilters['ward'] }}</span>
+                    @endif
+                    @if(!empty($currentFilters['area_code']))
+                        <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs">এলাকা কোড: {{ $currentFilters['area_code'] }}</span>
+                    @endif
+                    @if(!empty($currentFilters['gender']))
+                        <span class="bg-pink-100 text-pink-700 px-2 py-1 rounded-full text-xs">{{ $currentFilters['gender'] }}</span>
+                    @endif
+                </div>
+                @endif
             </form>
         </div>
 
-        <!-- Search Summary -->
+        <!-- Search Summary & Result Filters -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-search text-purple-600 mr-2"></i>
@@ -126,14 +168,51 @@
                         @if($query)
                             "{{ $query }}" এর জন্য 
                         @endif
-                        <span class="font-semibold text-purple-600">@bengali($voters->total() ?? 0)</span> টি ফলাফল পাওয়া গেছে
+                        <span class="font-semibold text-purple-600">@bengali($voters->total() ?? 0)</span> টি ফলাফল 
+                        <span x-show="filteredCount !== totalCount" class="text-sm">
+                            (<span class="text-green-600 font-semibold" x-text="toBengali(filteredCount)"></span> টি দেখানো হচ্ছে)
+                        </span>
                     </p>
                 </div>
                 
-                <a href="{{ route('home') }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center">
-                    <i class="fas fa-sliders-h mr-2"></i>
-                    অ্যাডভান্সড সার্চ
-                </a>
+                <!-- Result Page Filters -->
+                <div class="flex flex-wrap gap-3">
+                    <!-- Center Filter -->
+                    @if(count($centers) > 1)
+                    <div class="relative">
+                        <select x-model="selectedCenter" @change="applyFilters()"
+                                class="appearance-none bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:border-purple-500 cursor-pointer">
+                            <option value="">সকল কেন্দ্র</option>
+                            @foreach($centers as $centerName => $displayName)
+                                <option value="{{ $centerName }}">{{ $displayName }}</option>
+                            @endforeach
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-purple-500 text-xs pointer-events-none"></i>
+                    </div>
+                    @endif
+                    
+                    <!-- Birth Year Filter -->
+                    @if(count($birthYears) > 1)
+                    <div class="relative">
+                        <select x-model="selectedYear" @change="applyFilters()"
+                                class="appearance-none bg-green-50 border border-green-200 text-green-700 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:border-green-500 cursor-pointer">
+                            <option value="">সকল জন্ম সাল</option>
+                            @foreach($birthYears as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-xs pointer-events-none"></i>
+                    </div>
+                    @endif
+                    
+                    <!-- Clear Filters -->
+                    <button x-show="selectedCenter || selectedYear" 
+                            @click="clearFilters()"
+                            class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm hover:bg-red-200 transition">
+                        <i class="fas fa-times mr-1"></i>
+                        ফিল্টার মুছুন
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -141,7 +220,14 @@
         @if($voters->count() > 0)
             <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
                 @foreach($voters as $index => $voter)
-                    <div id="voter-card-{{ $voter->id }}" class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden">
+                    <div id="voter-card-{{ $voter->id }}" 
+                         class="voter-card bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden"
+                         data-center="{{ $voter->center_name }}"
+                         data-birth-year="{{ substr($voter->date_of_birth ?? '', -4) }}"
+                         x-show="isVisible('{{ $voter->center_name }}', '{{ substr($voter->date_of_birth ?? '', -4) }}')"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform scale-95"
+                         x-transition:enter-end="opacity-100 transform scale-100">
                         <!-- Card Header -->
                         <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 flex justify-between items-center">
                             <div class="flex items-center gap-3 text-white">
@@ -176,7 +262,7 @@
                             <!-- Address -->
                             <div class="text-sm mt-2 pt-2 border-t border-gray-50">
                                 <span class="text-gray-400">ঠিকানা:</span> 
-                                <span class="text-gray-600">{{ $voter->upazila }}, {{ $voter->union }}, {{ $voter->area_name ?? $voter->area_code }}@if($voter->address), {{ $voter->address }}@endif</span>
+                                <span class="text-gray-600">{{ $voter->upazila }}, {{ $voter->union }}, {{ $voter->area_name ?? '' }}, ওয়ার্ড: @bengali($voter->ward), এলাকা কোড: @bengali($voter->area_code)</span>
                             </div>
                         </div>
                         
@@ -212,7 +298,8 @@
                                 "upazila": "{{ $voter->upazila }}",
                                 "union": "{{ $voter->union }}",
                                 "ward": "{{ $voter->ward }}",
-                                "area": "{{ $voter->area_name ?? $voter->area_code }}"
+                                "area_name": "{{ $voter->area_name ?? '' }}",
+                                "area_code": "{{ $voter->area_code }}"
                             }
                         </script>
                     </div>
@@ -254,6 +341,57 @@
             <p class="mt-2 text-gray-500">Developed by <span class="text-purple-400 font-medium">Mir Javed Jeetu</span></p>
         </div>
     </footer>
+
+    <!-- Alpine.js Search Results Component -->
+    <script>
+        function searchResults() {
+            return {
+                selectedCenter: '',
+                selectedYear: '',
+                totalCount: {{ $voters->count() }},
+                filteredCount: {{ $voters->count() }},
+                
+                init() {
+                    this.updateFilteredCount();
+                },
+                
+                isVisible(center, birthYear) {
+                    let centerMatch = !this.selectedCenter || center === this.selectedCenter;
+                    let yearMatch = !this.selectedYear || birthYear === this.selectedYear;
+                    return centerMatch && yearMatch;
+                },
+                
+                applyFilters() {
+                    this.$nextTick(() => {
+                        this.updateFilteredCount();
+                    });
+                },
+                
+                updateFilteredCount() {
+                    let visible = 0;
+                    document.querySelectorAll('.voter-card').forEach(card => {
+                        const center = card.dataset.center;
+                        const birthYear = card.dataset.birthYear;
+                        if (this.isVisible(center, birthYear)) {
+                            visible++;
+                        }
+                    });
+                    this.filteredCount = visible;
+                },
+                
+                clearFilters() {
+                    this.selectedCenter = '';
+                    this.selectedYear = '';
+                    this.updateFilteredCount();
+                },
+                
+                toBengali(num) {
+                    const bengali = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+                    return String(num).replace(/[0-9]/g, d => bengali[d]);
+                }
+            }
+        }
+    </script>
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
@@ -297,7 +435,7 @@
 💼 *পেশা:* ${data.occupation}
 👨 *পিতার নাম:* ${data.father}
 👩 *মাতার নাম:* ${data.mother}
-📍 *ঠিকানা:* ${data.upazila}, ${data.union}, ওয়ার্ড: ${data.ward}, ${data.area}
+📍 *ঠিকানা:* ${data.upazila}, ${data.union}, ${data.area_name}, ওয়ার্ড: ${data.ward}, এলাকা কোড: ${data.area_code}
 ━━━━━━━━━━━━━━━
 🌐 সাতক্ষীরা-২ ভোটার তালিকা`;
         }

@@ -288,7 +288,7 @@
                             <label class="block text-sm text-gray-600 mb-1">এরিয়া কোড</label>
                             <select name="area_code" 
                                     x-model="selectedAreaCode"
-                                    @change="updateEstimate()"
+                                    @change="onAreaCodeChange()"
                                     :disabled="!selectedWard"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
                                 <option value="">-- এরিয়া কোড নির্বাচন করুন --</option>
@@ -304,7 +304,8 @@
                             <select name="gender" 
                                     x-model="selectedGender"
                                     @change="updateEstimate()"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none">
+                                    :disabled="!selectedAreaCode"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:outline-none disabled:bg-gray-100">
                                 <option value="">-- লিঙ্গ নির্বাচন করুন --</option>
                                 @foreach($genders as $gender)
                                     <option value="{{ $gender }}">{{ $gender }}</option>
@@ -473,6 +474,7 @@
                     this.selectedUnion = '';
                     this.selectedWard = '';
                     this.selectedAreaCode = '';
+                    this.selectedGender = '';
                     this.unions = [];
                     this.wards = [];
                     this.areaCodes = [];
@@ -487,6 +489,7 @@
                 async onUnionChange() {
                     this.selectedWard = '';
                     this.selectedAreaCode = '';
+                    this.selectedGender = '';
                     this.wards = [];
                     this.areaCodes = [];
 
@@ -499,6 +502,7 @@
 
                 async onWardChange() {
                     this.selectedAreaCode = '';
+                    this.selectedGender = '';
                     this.areaCodes = [];
 
                     if (this.selectedWard) {
@@ -506,6 +510,11 @@
                         this.areaCodes = await response.json();
                         this.updateEstimate();
                     }
+                },
+
+                onAreaCodeChange() {
+                    this.selectedGender = '';
+                    this.updateEstimate();
                 },
 
                 async updateEstimate() {

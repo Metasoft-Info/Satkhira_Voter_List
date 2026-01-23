@@ -186,17 +186,57 @@ class HomeController extends Controller
             $voterQuery->where('gender', $gender);
         }
         
-        $voters = $voterQuery->orderBy('serial_no')->paginate(20)->withQueryString();
+        // Clone query for getting filters from results
+        $baseQuery = clone $voterQuery;
+        
+        $voters = $voterQuery->orderBy('serial_no')->paginate(50)->withQueryString();
+        
+        // Get unique centers from current filter results
+        $concat = $this->concatFields("center_no", "' - '", "center_name");
+        $centers = $baseQuery->select(DB::raw("{$concat} as display_name"), 'center_name', 'center_no')
+            ->groupBy('center_no', 'center_name')
+            ->orderBy('center_no')
+            ->pluck('display_name', 'center_name')
+            ->toArray();
+        
+        // Get unique birth years from current filter results
+        $birthYears = Voter::query()
+            ->when($upazila, fn($q) => $q->where('upazila', $upazila))
+            ->when($union, fn($q) => $q->where('union', $union))
+            ->when($ward, fn($q) => $q->where('ward', $ward))
+            ->when($areaCode, fn($q) => $q->where('area_code', $areaCode))
+            ->when($gender, fn($q) => $q->where('gender', $gender))
+            ->selectRaw("DISTINCT SUBSTRING(date_of_birth, -4) as birth_year")
+            ->whereNotNull('date_of_birth')
+            ->where('date_of_birth', '!=', '')
+            ->orderBy('birth_year')
+            ->pluck('birth_year')
+            ->filter()
+            ->values()
+            ->toArray();
         
         $banners = Banner::active()->orderBy('order')->get();
         $breakingNews = BreakingNews::active()->orderBy('order')->get();
+        
+        // Pass all current filters to view
+        $currentFilters = [
+            'upazila' => $upazila,
+            'union' => $union,
+            'ward' => $ward,
+            'area_code' => $areaCode,
+            'center' => $center,
+            'gender' => $gender,
+        ];
         
         return view('search-results', compact(
             'voters', 
             'query', 
             'searchType', 
             'banners', 
-            'breakingNews'
+            'breakingNews',
+            'centers',
+            'birthYears',
+            'currentFilters'
         ));
     }
     
