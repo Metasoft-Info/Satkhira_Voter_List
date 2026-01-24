@@ -11,7 +11,7 @@
     <meta http-equiv="Expires" content="0">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5">
+    <link rel="icon" type="image/png" href="/favicon.png?v=6">
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#7c3aed">
@@ -19,7 +19,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ভোটার তালিকা">
     <link rel="manifest" href="/manifest.json?v=5">
-    <link rel="apple-touch-icon" href="/favicon.svg?v=5">
+    <link rel="apple-touch-icon" href="/favicon.png?v=6">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

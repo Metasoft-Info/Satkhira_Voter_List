@@ -10,7 +10,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5">
+    <link rel="icon" type="image/png" href="/favicon.png?v=6">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

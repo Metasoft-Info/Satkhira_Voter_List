@@ -7,9 +7,47 @@ use App\Models\Banner;
 use App\Models\BreakingNews;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class SettingsController extends Controller
 {
+    /**
+     * Sync storage files to root storage folder for cPanel compatibility
+     * cPanel doesn't support symlinks properly, so we copy files directly
+     */
+    private function syncStorageFile($relativePath)
+    {
+        $sourcePath = storage_path('app/public/' . $relativePath);
+        $destPath = base_path('storage/' . $relativePath);
+        
+        // Create directory if not exists
+        $destDir = dirname($destPath);
+        if (!File::exists($destDir)) {
+            File::makeDirectory($destDir, 0755, true);
+        }
+        
+        // Copy file
+        if (File::exists($sourcePath)) {
+            File::copy($sourcePath, $destPath);
+            chmod($destPath, 0755);
+        }
+    }
+    
+    /**
+     * Delete file from both storage locations
+     */
+    private function deleteStorageFile($relativePath)
+    {
+        // Delete from standard Laravel storage
+        Storage::disk('public')->delete($relativePath);
+        
+        // Also delete from root storage folder
+        $destPath = base_path('storage/' . $relativePath);
+        if (File::exists($destPath)) {
+            File::delete($destPath);
+        }
+    }
+
     public function banners()
     {
         $banners = Banner::orderBy('order')->get();
@@ -30,6 +68,9 @@ class SettingsController extends Controller
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('banners', 'public');
+            
+            // Sync to root storage folder for cPanel
+            $this->syncStorageFile($imagePath);
         }
 
         Banner::create([
@@ -55,7 +96,7 @@ class SettingsController extends Controller
     public function deleteBanner(Banner $banner)
     {
         if ($banner->image) {
-            Storage::disk('public')->delete($banner->image);
+            $this->deleteStorageFile($banner->image);
         }
         $banner->delete();
         return redirect()->route('admin.banners')->with('success', 'ব্যানার মুছে ফেলা হয়েছে!');
