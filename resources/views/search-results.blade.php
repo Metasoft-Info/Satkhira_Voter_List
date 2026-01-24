@@ -236,18 +236,21 @@
                         <!-- Card Header - Center Info -->
                         <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3">
                             <div class="text-white">
-                                <div class="flex items-center gap-2 text-sm">
-                                    <span class="font-medium">কেন্দ্র নং:</span>
-                                    <span class="bg-white/20 px-2 py-0.5 rounded">@bengali($voter->center_no)</span>
-                                </div>
-                                <div class="text-lg font-semibold mt-1">{{ $voter->center_name }}</div>
+                                <div class="text-lg font-bold">কেন্দ্র নং: @bengali($voter->center_no)</div>
+                                <div class="text-lg font-bold mt-1">{{ $voter->center_name }}</div>
                             </div>
                         </div>
                         
                         <!-- Card Body - Voter Info -->
                         <div class="p-4 space-y-2">
-                            <!-- Serial No -->
+                            <!-- Gender -->
                             <div class="flex items-center text-sm border-b border-gray-100 pb-2">
+                                <span class="text-gray-500 w-24">লিঙ্গ:</span>
+                                <span class="font-bold text-gray-900">{{ $voter->gender == 'পুরুষ' ? '👨' : ($voter->gender == 'মহিলা' ? '👩' : '🧑') }} {{ $voter->gender }}</span>
+                            </div>
+                            
+                            <!-- Serial No -->
+                            <div class="flex items-center text-sm">
                                 <span class="text-gray-500 w-24">সিরিয়াল নং:</span>
                                 <span class="font-bold text-gray-900 text-lg">@bengali($voter->serial_no)</span>
                             </div>
@@ -256,7 +259,6 @@
                             <div class="flex items-center text-sm">
                                 <span class="text-gray-500 w-24">নাম:</span>
                                 <span class="font-bold text-gray-900 text-lg">{{ $voter->name }}</span>
-                                <span class="ml-2">{{ $voter->gender == 'পুরুষ' ? '👨' : ($voter->gender == 'মহিলা' ? '👩' : '🧑') }}</span>
                             </div>
                             
                             <!-- Voter ID -->
@@ -404,10 +406,12 @@
 
         // Format voter data as text
         function formatVoterText(data) {
+            const genderEmoji = data.gender === 'পুরুষ' ? '👨' : (data.gender === 'মহিলা' ? '👩' : '🧑');
             return `📋 *ভোটার তথ্য*
 ━━━━━━━━━━━━━━━
 🏢 *কেন্দ্র নং:* ${data.center_no}
 🏛️ *কেন্দ্র:* ${data.center_name}
+${genderEmoji} *লিঙ্গ:* ${data.gender}
 📝 *সিরিয়াল নং:* ${data.serial_no}
 👤 *নাম:* ${data.name}
 🆔 *ভোটার নং:* ${data.voter_id}
